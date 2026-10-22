@@ -1,4 +1,6 @@
 """Screenshot the UI in demo mode with headless Chrome: python tools/screens.py [name=query ...]"""
+from __future__ import annotations
+
 import subprocess
 import sys
 import tempfile
@@ -30,13 +32,13 @@ SCENES = {
 }
 
 
-def shoot(name: str, query: str, lang: str, theme: str, size=(1080, 740)) -> Path:
-    OUT.mkdir(exist_ok=True)
-    target = OUT / f"{name}-{lang}-{theme}.png"
+def shoot(name: str, query: str, lang: str, theme: str, size=(1080, 740), scale: int = 1, out: Path | None = None) -> Path:
+    target = (out or OUT) / f"{name}-{lang}-{theme}{'@2x' if scale == 2 else ''}.png"
+    target.parent.mkdir(parents=True, exist_ok=True)
     url = f"{UI.as_uri()}?demo=1&lang={lang}&theme={theme}&{query}"
     with tempfile.TemporaryDirectory() as profile:
         subprocess.run([CHROME, "--headless=new", f"--user-data-dir={profile}", "--hide-scrollbars",
-                        f"--window-size={size[0]},{size[1]}", "--virtual-time-budget=4000",
+                        f"--force-device-scale-factor={scale}", f"--window-size={size[0]},{size[1]}", "--virtual-time-budget=4000",
                         f"--screenshot={target}", url], capture_output=True, timeout=60)
     return target
 
