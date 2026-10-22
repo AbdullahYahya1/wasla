@@ -6,6 +6,30 @@
 Free, open source, step by step, in English and Arabic.<br>
 <a href="https://abdullahyahya1.github.io/wasla/">Website</a> · <a href="https://github.com/AbdullahYahya1/wasla/releases/latest">Download for Mac</a></p>
 
+
+<p align="center"><img src="docs/screenshots/copy-run-en-light@2x.png" width="820" alt="Wasla copying chats from Android, 37 percent done with about 7 minutes left"></p>
+
+## Screenshots
+
+<table>
+<tr>
+<td width="50%"><img src="docs/screenshots/welcome-en-light@2x.png" alt="Welcome step"><br><sub><b>Welcome</b>: what you need and what stays safe</sub></td>
+<td width="50%"><img src="docs/screenshots/key-ar-light@2x.png" alt="Backup key step in Arabic"><br><sub><b>Backup key</b>, in Arabic: 16 boxes like WhatsApp's grid, read in either direction</sub></td>
+</tr>
+<tr>
+<td><img src="docs/screenshots/connect-en-light@2x.png" alt="Connect step"><br><sub><b>Connect</b>: live checks for both phones and free space</sub></td>
+<td><img src="docs/screenshots/ready-ar-light@2x.png" alt="Get iPhone ready step in Arabic"><br><sub><b>Get the iPhone ready</b>: help for a greyed-out Find My switch, in the iPhone's own menu names</sub></td>
+</tr>
+<tr>
+<td><img src="docs/screenshots/backup-pass-en-light@2x.png" alt="Back up iPhone step with passcode banner"><br><sub><b>Back up the iPhone</b>: a banner when the iPhone asks for its passcode</sub></td>
+<td><img src="docs/screenshots/prepare-run-ar-dark@2x.png" alt="Prepare step in Arabic, dark mode"><br><sub><b>Prepare</b>, dark mode: one percent across previews, chats and media</sub></td>
+</tr>
+<tr>
+<td><img src="docs/screenshots/restore-run-en-dark@2x.png" alt="Restore step in dark mode"><br><sub><b>Restore</b>: only WhatsApp's data goes back to the iPhone</sub></td>
+<td><img src="docs/screenshots/finish-ar-light@2x.png" alt="Finish step in Arabic"><br><sub><b>Finish</b>: checklist, storage before and after, delete the private copies or Undo</sub></td>
+</tr>
+</table>
+
 ---
 
 WhatsApp's own Android → iPhone transfer only works while setting up a new or erased iPhone. If your iPhone

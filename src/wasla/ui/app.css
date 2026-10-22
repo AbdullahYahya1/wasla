@@ -153,7 +153,7 @@ a { color: var(--sky); }
 @media (prefers-reduced-motion: reduce) { .stop.here .dot::after { animation: none; } }
 
 /* ---------- step page ---------- */
-.page { min-height: 0; overflow: auto; display: flex; flex-direction: column; }
+.page { min-height: 0; min-width: 0; overflow: auto; display: flex; flex-direction: column; }
 .page-inner { width: 100%; max-width: 760px; margin: 0 auto; padding: 40px 44px 24px; flex: 1; }
 .step-no { color: var(--muted); font-size: 13px; margin: 0 0 6px; }
 h1 { font-size: 30px; line-height: 1.2; letter-spacing: -.02em; font-weight: 600; margin: 0 0 10px; max-width: 26ch; }
@@ -230,12 +230,13 @@ summary { cursor: pointer; color: var(--sky); font-size: 14px; width: fit-conten
 @media (prefers-reduced-motion: reduce) { .spin { animation-duration: 3s; } }
 
 /* ---------- key grid ---------- */
-.split { display: grid; grid-template-columns: 1fr 1fr; gap: 36px; align-items: start; }
+.split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 36px; align-items: start; }
+.split > * { min-width: 0; }
 .split h2:first-child { margin-top: 0; }
 .big-spin { width: 44px; height: 44px; border-width: 5px; }
-.keygrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; max-width: 470px; margin: 8px 0 14px; }
+.keygrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; max-width: 470px; margin: 8px 0 14px; }
 .keygrid input {
-  width: 100%; text-align: center; padding: 11px 6px; border-radius: var(--radius-s); border: 1.5px solid var(--line);
+  width: 100%; min-width: 0; text-align: center; padding: 11px 6px; border-radius: var(--radius-s); border: 1.5px solid var(--line);
   background: var(--surface); font-size: 17px; letter-spacing: .06em; text-transform: lowercase;
   font-variant-numeric: tabular-nums;
 }

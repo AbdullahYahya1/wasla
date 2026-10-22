@@ -11,7 +11,15 @@
     throw new Error("timeout: " + what);
   }
   const view = () => window.wasla._S.view;
-  const click = async (sel, what) => { await until(() => $(sel) && !$(sel).disabled, what); $(sel).click(); log.push(what); await sleep(30); };
+  const fits = (what) => {           // no step may make the page scroll sideways
+    const page = $("#page");
+    if (page.scrollWidth > page.clientWidth + 1) throw new Error(`${view()} overflows sideways (${what})`);
+  };
+  const click = async (sel, what) => {
+    await until(() => $(sel) && !$(sel).disabled, what);
+    fits(what);
+    $(sel).click(); log.push(what); await sleep(30);
+  };
   async function run() {
     await until(() => $("h1"), "first render");
     await click('[data-act="mark"][data-step="welcome"]', "start");
