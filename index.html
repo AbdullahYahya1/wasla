@@ -1,0 +1,410 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Wasla</title>
+<meta name="description" content="Move WhatsApp from Android to the iPhone you already use, without erasing it. Free and open source for Mac, in English and Arabic.">
+<link rel="icon" href="img/icon.png">
+<!--FONT-->
+<style>
+@font-face { font-family: "Readex Pro"; src: url("fonts/ReadexPro.ttf") format("truetype"); font-weight: 160 700; font-display: swap; }
+/* Layout: a night-drive route from Android to iPhone runs through the page; one column of text beside real app screenshots. */
+:root {
+  --ink: #1B2140; --paper: #F5F6FA; --surface: #FFFFFF; --surface-2: #EEF0F7;
+  --text: #1B2140; --muted: #5E6582; --line: #DCDFEB; --route: #CDD2E4;
+  --amber: #FFB41F; --amber-ink: #1B2140; --amber-soft: #FFF3D6; --amber-text: #8F5D00;
+  --sky: #4A6CF0; --sky-soft: #E8EDFF; --good: #1F8F5C; --bad: #C93439; --night: #171C38; --night-text: #EEF0F8; --night-muted: #B9BFDB;
+  --font: "Readex Pro", -apple-system, "SF Arabic", "Geeza Pro", "Segoe UI", sans-serif;
+  --shadow: 0 1px 2px rgba(27, 33, 64, .06), 0 18px 50px rgba(27, 33, 64, .14);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #12162B; --surface: #1B2140; --surface-2: #232A4F; --text: #EEF0F8; --muted: #A1A8C8;
+    --line: #2C345C; --route: #3A4373; --amber-soft: #3A3220; --amber-text: #FFC95C; --sky: #8FA6FF;
+    --sky-soft: #26305E; --good: #45C789; --bad: #FF6B70; --night: #0D1022; --night-text: #EEF0F8;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 18px 50px rgba(0, 0, 0, .35); color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #12162B; --surface: #1B2140; --surface-2: #232A4F; --text: #EEF0F8; --muted: #A1A8C8;
+  --line: #2C345C; --route: #3A4373; --amber-soft: #3A3220; --amber-text: #FFC95C; --sky: #8FA6FF;
+  --sky-soft: #26305E; --good: #45C789; --bad: #FF6B70; --night: #0D1022; --night-text: #EEF0F8;
+  --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 18px 50px rgba(0, 0, 0, .35); color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: var(--paper); color: var(--text); font-family: var(--font); font-size: 17px; line-height: 1.6;
+  -webkit-font-smoothing: antialiased; font-variant-numeric: tabular-nums; }
+[lang="ar"] body { font-size: 18px; line-height: 1.75; }
+a { color: var(--sky); }
+:focus-visible { outline: 3px solid var(--sky); outline-offset: 3px; border-radius: 6px; }
+img { max-width: 100%; height: auto; display: block; }
+.wrap { max-width: 1120px; margin: 0 auto; padding-left: max(20px, env(safe-area-inset-left, 0px)); padding-right: max(20px, env(safe-area-inset-right, 0px)); }
+h1, h2, h3 { text-wrap: balance; margin: 0; letter-spacing: -.02em; }
+[lang="ar"] h1, [lang="ar"] h2, [lang="ar"] h3 { letter-spacing: 0; }
+p { margin: 0; }
+
+/* top bar */
+.top { display: flex; align-items: center; gap: 16px; padding-block: 18px; }
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 20px; color: var(--text); text-decoration: none; }
+.brand img { width: 34px; height: 34px; }
+.top .spacer { flex: 1; }
+.seg { display: inline-flex; background: var(--surface-2); border-radius: 999px; padding: 3px; }
+.seg button { border: 0; background: none; font: inherit; font-size: 14px; color: var(--muted); padding: 5px 13px; border-radius: 999px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+.top a.gh { color: var(--muted); text-decoration: none; font-size: 15px; }
+.top a.gh:hover { color: var(--text); }
+
+/* hero */
+.hero { display: grid; grid-template-columns: minmax(0, 6fr) minmax(0, 6fr); gap: 48px; align-items: center; padding-block: 48px 64px; }
+.hero h1 { font-size: clamp(36px, 4.6vw, 56px); line-height: 1.05; font-weight: 600; }
+[lang="ar"] .hero h1 { line-height: 1.3; }
+.hero .lede { font-size: 20px; color: var(--muted); margin-top: 20px; max-width: 38ch; }
+.cta-row { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; margin-top: 32px; }
+.btn { display: inline-flex; align-items: center; gap: 10px; background: var(--amber); color: var(--amber-ink); font-weight: 600; text-decoration: none;
+  padding: 15px 26px; border-radius: 14px; font-size: 17px; transition: transform .1s ease, filter .15s ease; }
+.btn:hover { filter: brightness(1.04); }
+.btn:active { transform: translateY(1px); }
+.btn svg { width: 20px; height: 20px; }
+.btn.quiet { background: transparent; color: var(--text); border: 1.5px solid var(--line); }
+.fine { font-size: 14px; color: var(--muted); margin-top: 14px; }
+.window { border-radius: 14px; overflow: hidden; background: var(--surface); box-shadow: var(--shadow); border: 1px solid var(--line); }
+.window .chrome { height: 30px; display: flex; gap: 7px; align-items: center; padding-inline: 12px; background: var(--surface-2); direction: ltr; }
+.window .chrome i { width: 11px; height: 11px; border-radius: 50%; background: var(--route); }
+.window .chrome i:nth-child(1) { background: #FF5F57; } .window .chrome i:nth-child(2) { background: #FEBC2E; } .window .chrome i:nth-child(3) { background: #28C840; }
+
+/* the route band */
+.band { background: var(--night); color: var(--night-text); }
+.route { padding-block: 56px; display: grid; grid-template-columns: 1fr; gap: 28px; }
+.route svg.trip { width: 100%; height: auto; overflow: visible; }
+[dir="rtl"] .route svg.trip { transform: scaleX(-1); }
+.facts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px; }
+.fact b { display: block; font-size: clamp(28px, 3.4vw, 40px); font-weight: 600; letter-spacing: -.02em; color: var(--amber); }
+.fact span { color: var(--night-muted); font-size: 15px; }
+.route .caption { color: var(--night-muted); font-size: 15px; max-width: 70ch; }
+
+/* sections */
+section.block { padding-block: 80px; }
+.kicker { color: var(--amber-text); font-weight: 600; font-size: 15px; margin-bottom: 10px; }
+h2 { font-size: clamp(30px, 3.6vw, 44px); line-height: 1.15; font-weight: 600; max-width: 22ch; }
+.sub { color: var(--muted); font-size: 19px; margin-top: 14px; max-width: 58ch; }
+.compare { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 40px; }
+.side { border-radius: 20px; padding: 28px; border: 1px solid var(--line); background: var(--surface); }
+.side h3 { font-size: 20px; font-weight: 600; margin-bottom: 14px; }
+.side.them { background: transparent; }
+.side ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.side li { display: grid; grid-template-columns: 22px 1fr; gap: 10px; }
+.side li svg { width: 20px; height: 20px; margin-top: 4px; }
+.side.them li svg { color: var(--bad); }
+.side.us li svg { color: var(--good); }
+
+.steps { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 56px; margin-top: 44px; align-items: start; }
+.steps ol { list-style: none; margin: 0; padding: 0; position: relative; display: grid; gap: 30px; }
+.steps ol::before { content: ""; position: absolute; inset-inline-start: 17px; top: 18px; bottom: 18px; width: 3px; border-radius: 2px;
+  background: repeating-linear-gradient(to bottom, var(--amber) 0 10px, transparent 10px 18px); }
+.steps li { position: relative; display: grid; grid-template-columns: 38px 1fr; gap: 18px; }
+.steps li .n { width: 38px; height: 38px; border-radius: 50%; background: var(--amber); color: var(--amber-ink); font-weight: 600;
+  display: grid; place-items: center; position: relative; z-index: 1; }
+.steps li h3 { font-size: 20px; font-weight: 600; margin-top: 4px; }
+.steps li p { color: var(--muted); margin-top: 4px; }
+.steps .sticky { position: sticky; top: 24px; }
+
+.lessons { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; margin-top: 40px; }
+.lesson { background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 26px; display: grid; gap: 10px; align-content: start; }
+.lesson h3 { font-size: 19px; font-weight: 600; }
+.lesson p { color: var(--muted); font-size: 16px; }
+.grid4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; max-width: 280px; margin-top: 6px; direction: rtl; }
+.grid4 span { border: 1.5px solid var(--line); border-radius: 7px; text-align: center; font-size: 14px; padding: 4px 0; color: var(--muted); }
+.grid4 span.first { border-color: var(--amber); color: var(--text); font-weight: 600; }
+.grid-note { font-size: 13px; color: var(--muted); }
+
+.moves { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 40px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.chip { padding: 6px 12px; border-radius: 999px; background: var(--surface-2); font-size: 15px; }
+.chip.yes { background: var(--amber-soft); }
+
+.req { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 40px; margin-top: 32px; padding: 0; list-style: none; }
+.req li { border-top: 1px solid var(--line); padding-top: 12px; }
+.req li b { display: block; font-weight: 600; }
+.req li span { color: var(--muted); font-size: 16px; }
+
+.faq { margin-top: 32px; max-width: 760px; }
+.faq details { border-top: 1px solid var(--line); padding-block: 18px; }
+.faq details:last-child { border-bottom: 1px solid var(--line); }
+.faq summary { cursor: pointer; font-weight: 600; font-size: 18px; list-style: none; display: flex; justify-content: space-between; gap: 16px; }
+.faq summary::after { content: "+"; color: var(--amber-text); font-weight: 400; font-size: 22px; line-height: 1; }
+.faq details[open] summary::after { content: "–"; }
+.faq details p { color: var(--muted); margin-top: 10px; max-width: 65ch; }
+
+.final { text-align: center; padding-block: 72px; }
+.final h2 { margin: 0 auto; }
+.final .cta-row { justify-content: center; }
+footer { border-top: 1px solid var(--line); padding-block: 32px 48px; color: var(--muted); font-size: 14px; }
+footer .row { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 16px; }
+footer p { max-width: 70ch; }
+
+@media (max-width: 900px) {
+  .hero, .steps, .compare, .moves { grid-template-columns: 1fr; }
+  .hero { gap: 36px; padding-block: 24px 48px; }
+  .facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .lessons, .req { grid-template-columns: 1fr; }
+  .steps .sticky { position: static; }
+  section.block { padding-block: 56px; }
+}
+@media (max-width: 480px) { .top a.gh { display: none; } .btn { width: 100%; justify-content: center; } }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } .car { display: none; } }
+</style>
+</head>
+<body>
+<header class="wrap top">
+  <a class="brand" href="#"><img src="img/icon.png" alt=""><span data-t="name">Wasla</span></a>
+  <div class="spacer"></div>
+  <div class="seg" role="group" aria-label="Language">
+    <button type="button" data-lang="ar" aria-pressed="false">العربية</button>
+    <button type="button" data-lang="en" aria-pressed="true">English</button>
+  </div>
+  <a class="gh" href="https://github.com/AbdullahYahya1/wasla" data-t="source">Source code</a>
+</header>
+
+<main>
+  <div class="wrap hero">
+    <div>
+      <h1 data-t="h1">Move WhatsApp to your iPhone without erasing it</h1>
+      <p class="lede" data-t="lede">Your Android chats, photos and voice notes, added to the iPhone you already use. Step by step, in English or Arabic.</p>
+      <div class="cta-row">
+        <a class="btn" href="https://github.com/AbdullahYahya1/wasla/releases/latest"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10.5l5 5 5-5M5 20h14"/></svg><span data-t="download">Download for Mac</span></a>
+        <a class="btn quiet" href="#how" data-t="how_link">How it works</a>
+      </div>
+      <p class="fine" data-t="fine">Free and open source. For Macs with macOS 12 or later, Apple silicon or Intel.</p>
+    </div>
+    <div class="window" aria-hidden="true">
+      <div class="chrome"><i></i><i></i><i></i></div>
+      <img data-img="copy-run" src="img/copy-run-en-light@2x.png" width="1080" height="740" alt="">
+    </div>
+  </div>
+
+  <div class="band">
+    <div class="wrap route">
+      <svg class="trip" viewBox="0 0 1000 170" role="img" aria-label="">
+        <path id="arc" d="M60 140 C 250 -10, 750 -10, 940 140" fill="none" stroke="#FFB41F" stroke-width="6" stroke-linecap="round" stroke-dasharray="1 17"/>
+        <circle cx="60" cy="140" r="15" fill="#FFFFFF"/>
+        <circle cx="940" cy="140" r="24" fill="#FFB41F"/><circle cx="940" cy="140" r="10" fill="#171C38"/>
+        <circle class="car" r="9" fill="#FFB41F"><animateMotion dur="2.4s" fill="freeze" keyPoints="0;1" keyTimes="0;1" calcMode="spline" keySplines=".4 0 .2 1"><mpath href="#arc"/></animateMotion></circle>
+      </svg>
+      <div class="facts">
+        <div class="fact"><b>12</b><span data-t="f_years">years of chats in the first move</span></div>
+        <div class="fact"><b>558,855</b><span data-t="f_messages">messages moved</span></div>
+        <div class="fact"><b data-t="f_gb_v">23.7 GB</b><span data-t="f_gb">of photos, videos and voice notes</span></div>
+        <div class="fact"><b data-t="f_thumbs_v">27 s</b><span data-t="f_thumbs">to make 28,444 previews, down from about 20 minutes</span></div>
+      </div>
+      <p class="caption" data-t="caption">Wasla was built on a real move: one person, twelve years of WhatsApp, a Motorola and an iPhone that already had everything else on it.</p>
+    </div>
+  </div>
+
+  <section class="block">
+    <div class="wrap">
+      <p class="kicker" data-t="why_k">Why Wasla</p>
+      <h2 data-t="why_h">WhatsApp's own move only works on an empty iPhone</h2>
+      <p class="sub" data-t="why_p">The official Android to iPhone transfer runs during setup, so an iPhone you already use has to be reset first. Wasla adds your chats to the iPhone as it is.</p>
+      <div class="compare">
+        <div class="side them">
+          <h3 data-t="them_h">The official way</h3>
+          <ul>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg><span data-t="them_1">Erase the iPhone and set it up again</span></li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg><span data-t="them_2">Restore photos, apps and settings afterwards</span></li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg><span data-t="them_3">Start over if anything goes wrong</span></li>
+          </ul>
+        </div>
+        <div class="side us">
+          <h3 data-t="us_h">With Wasla</h3>
+          <ul>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg><span data-t="us_1">Only WhatsApp's data on the iPhone changes</span></li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg><span data-t="us_2">Photos, apps and settings stay where they are</span></li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg><span data-t="us_3">Undo puts WhatsApp back as it was</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="how" style="padding-top:0">
+    <div class="wrap">
+      <p class="kicker" data-t="how_k">How it works</p>
+      <h2 data-t="how_h">Four stops, with the time left on every one</h2>
+      <div class="steps">
+        <ol>
+          <li><span class="n">1</span><div><h3 data-t="s1_h">Plug in both phones</h3><p data-t="s1_p">Wasla checks the cables, the iPhone's trust prompt and the Mac's free space as you go.</p></div></li>
+          <li><span class="n">2</span><div><h3 data-t="s2_h">Copy from Android</h3><p data-t="s2_p">Type the 64-digit backup key, and your chats, contact names and media come over the cable to the Mac.</p></div></li>
+          <li><span class="n">3</span><div><h3 data-t="s3_h">Back up and prepare</h3><p data-t="s3_p">A full iPhone backup stays on the Mac as a safety net. Your Android chats are added to WhatsApp's part of it.</p></div></li>
+          <li><span class="n">4</span><div><h3 data-t="s4_h">Restore WhatsApp only</h3><p data-t="s4_p">Only WhatsApp's data goes back to the iPhone. Open WhatsApp and scroll up through the years.</p></div></li>
+        </ol>
+        <div class="window sticky" aria-hidden="true">
+          <div class="chrome"><i></i><i></i><i></i></div>
+          <img data-img="prepare-run" data-theme-img="dark" src="img/prepare-run-en-dark@2x.png" width="1080" height="740" alt="" loading="lazy">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" style="padding-top:0">
+    <div class="wrap">
+      <p class="kicker" data-t="real_k">Made for real phones</p>
+      <h2 data-t="real_h">It explains the things that actually go wrong</h2>
+      <div class="lessons">
+        <div class="lesson">
+          <h3 data-t="l1_h">Keys shown right to left</h3>
+          <p data-t="l1_p">A phone in Arabic lays the key grid out right to left, so a key typed left to right fails. Wasla tries both directions and keeps the one that opens your backup.</p>
+          <div class="grid4" aria-hidden="true"><span class="first">3f1a</span><span>9c07</span><span>b2e4</span><span>5d68</span><span>a0c7</span><span>e19b</span><span>4f2d</span><span>8a63</span></div>
+          <p class="grid-note" data-t="l1_note">The first group sits at the top right.</p>
+        </div>
+        <div class="lesson">
+          <h3 data-t="l2_h">Cables that only charge</h3>
+          <p data-t="l2_p">If a phone doesn't show up, Wasla says so and suggests another cable, before you lose an hour.</p>
+        </div>
+        <div class="lesson">
+          <h3 data-t="l3_h">A greyed-out Find My switch</h3>
+          <p data-t="l3_p">Away from home, Stolen Device Protection makes you wait an hour. Wasla shows where to start the wait, in the iPhone's own menu names.</p>
+        </div>
+        <div class="lesson">
+          <h3 data-t="l4_h">Passcode prompts and quiet phones</h3>
+          <p data-t="l4_p">A big banner appears when the iPhone asks for its passcode, and Wasla tells you why a restore can sit at 0% for a minute.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" style="padding-top:0">
+    <div class="wrap">
+      <p class="kicker" data-t="what_k">What moves</p>
+      <h2 data-t="what_h">Your whole history, in the right chats</h2>
+      <div class="moves">
+        <div><h3 data-t="yes_h" style="font-size:19px">Moves to the iPhone</h3>
+          <div class="chips">
+            <span class="chip yes" data-t="y1">Private chats</span><span class="chip yes" data-t="y2">Groups</span><span class="chip yes" data-t="y3">Photos</span>
+            <span class="chip yes" data-t="y4">Videos</span><span class="chip yes" data-t="y5">Voice notes</span><span class="chip yes" data-t="y6">Documents</span>
+            <span class="chip yes" data-t="y7">Stickers and GIFs</span><span class="chip yes" data-t="y8">Locations</span><span class="chip yes" data-t="y9">Contact cards</span><span class="chip yes" data-t="y10">Starred messages</span>
+          </div></div>
+        <div><h3 data-t="no_h" style="font-size:19px">Stays behind</h3>
+          <div class="chips"><span class="chip" data-t="n1">Call history</span><span class="chip" data-t="n2">Status updates</span><span class="chip" data-t="n3">Media already deleted from the Android phone</span></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" style="padding-top:0">
+    <div class="wrap">
+      <p class="kicker" data-t="need_k">What you need</p>
+      <h2 data-t="need_h">A Mac, both phones and two good cables</h2>
+      <ul class="req">
+        <li><b data-t="r1_h">A Mac with macOS 12 or later</b><span data-t="r1_p">Apple silicon or Intel, with free space for an iPhone backup plus about twice your WhatsApp media.</span></li>
+        <li><b data-t="r2_h">The Android phone</b><span data-t="r2_p">WhatsApp (not WhatsApp Business), with USB debugging turned on. Wasla shows how.</span></li>
+        <li><b data-t="r3_h">The iPhone</b><span data-t="r3_p">WhatsApp installed and set up with the same number. Find My turned off for the move.</span></li>
+        <li><b data-t="r4_h">An hour or two</b><span data-t="r4_p">Most of it is copying. Wasla shows the percent and time left the whole way.</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="block" style="padding-top:0">
+    <div class="wrap">
+      <p class="kicker" data-t="faq_k">Questions</p>
+      <h2 data-t="faq_h">Before you start</h2>
+      <div class="faq">
+        <details><summary data-t="q1">Will this erase my iPhone?</summary><p data-t="a1">No. Only WhatsApp's data is restored. Afterwards the iPhone shows a few setup screens, which is normal after any restore.</p></details>
+        <details><summary data-t="q2">Is anything uploaded?</summary><p data-t="a2">No. Everything moves over the cables and stays on your Mac. Wasla has no account and sends nothing anywhere. The 64-digit key stays in memory and is never saved.</p></details>
+        <details><summary data-t="q3">What if something looks wrong afterwards?</summary><p data-t="a3">Use Undo on the last step. It puts WhatsApp on the iPhone back exactly as it was, from the copy Wasla kept. A full iPhone backup stays on your Mac too.</p></details>
+        <details><summary data-t="q4">What about messages that arrive during the move?</summary><p data-t="a4">Messages that reach the Android phone after its last backup stay on that phone. While the iPhone is in Airplane mode, new messages wait on WhatsApp's servers and arrive after the move.</p></details>
+        <details><summary data-t="q5">Is Wasla made by WhatsApp?</summary><p data-t="a5">No. Wasla is independent, free and open-source software built on wamove. It is not made by or affiliated with WhatsApp, Meta or Apple, and it relies on formats they don't document. Keep your Android phone as it is until you're happy with the result.</p></details>
+        <details><summary data-t="q7">My chats show a disappearing-messages timer</summary><p data-t="a7">That's WhatsApp's own setting, and it never deletes messages sent before it was turned on. In WhatsApp go to Settings, then Privacy, then Default message timer, and choose Off. If a chat still shows a timer, tap the chat's name, then Disappearing messages, then Off.</p></details>
+        <details><summary data-t="q6">Mac says "Wasla.app" Not Opened</summary><p data-t="a6">Wasla isn't notarized by Apple yet, so macOS asks once. Click Done, open System Settings, then Privacy &amp; Security. Under Security, click Open Anyway next to "Wasla.app was blocked", enter your Mac password and click Open Anyway again.</p></details>
+      </div>
+    </div>
+  </section>
+
+  <section class="final band">
+    <div class="wrap">
+      <h2 data-t="final_h">Bring your chats along</h2>
+      <div class="cta-row" style="margin-top:28px">
+        <a class="btn" href="https://github.com/AbdullahYahya1/wasla/releases/latest"><span data-t="download">Download for Mac</span></a>
+      </div>
+      <p class="fine" style="color:var(--night-muted)" data-t="fine">Free and open source. For Macs with macOS 12 or later, Apple silicon or Intel.</p>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap row">
+    <p data-t="foot">Wasla is free software under the GNU GPL v3, built on wamove by alicin. Not affiliated with WhatsApp, Meta or Apple. WhatsApp is a trademark of WhatsApp LLC; iPhone and Mac are trademarks of Apple Inc.</p>
+    <p><span data-t="made">Made by</span> <a href="https://github.com/AbdullahYahya1">AbdullahYahya1</a></p>
+  </div>
+</footer>
+
+<script>
+(() => {
+  const AR = {
+    name: "وصلة", source: "الكود المصدري",
+    h1: "انقل واتساب إلى الآيفون بدون ما تمسحه",
+    lede: "محادثاتك وصورك ورسائلك الصوتية من أندرويد تُضاف إلى الآيفون الذي تستخدمه الآن، خطوة بخطوة وبالعربي.",
+    download: "حمّل للماك", how_link: "كيف تعمل",
+    fine: "مجانية ومفتوحة المصدر. لأجهزة ماك بنظام macOS 12 أو أحدث، بمعالج Apple أو Intel.",
+    f_years: "سنة من المحادثات في أول نقل", f_messages: "رسالة انتقلت", f_gb_v: "23.7 جيجا", f_gb: "صور وفيديوهات ورسائل صوتية",
+    f_thumbs_v: "27 ثانية", f_thumbs: "لتجهيز 28,444 صورة مصغّرة بدل 20 دقيقة تقريبًا",
+    caption: "بُنيت وصلة على نقل حقيقي: شخص واحد، واتساب عمره اثنا عشر عامًا، جوال موتورولا، وآيفون عليه كل شيء آخر.",
+    why_k: "لماذا وصلة", why_h: "نقل واتساب الرسمي يعمل على آيفون فارغ فقط",
+    why_p: "النقل الرسمي من أندرويد إلى آيفون يتم أثناء إعداد الجهاز، فالآيفون الذي تستخدمه يجب مسحه أولًا. وصلة تضيف محادثاتك إلى الآيفون كما هو.",
+    them_h: "الطريقة الرسمية", them_1: "امسح الآيفون وأعد إعداده", them_2: "استرجع الصور والتطبيقات والإعدادات بعدها", them_3: "ابدأ من الصفر إذا حدث خطأ",
+    us_h: "مع وصلة", us_1: "لا تتغير إلا بيانات واتساب على الآيفون", us_2: "الصور والتطبيقات والإعدادات تبقى مكانها", us_3: "زر التراجع يرجع واتساب كما كان",
+    how_k: "كيف تعمل", how_h: "أربع محطات، والوقت المتبقي ظاهر في كل واحدة",
+    s1_h: "وصّل الجوالين", s1_p: "وصلة تتحقق من الكيابل وطلب الثقة على الآيفون والمساحة الفارغة في الماك أولًا بأول.",
+    s2_h: "انسخ من الأندرويد", s2_p: "اكتب مفتاح النسخة الاحتياطية المكون من 64 خانة، وتنتقل محادثاتك وأسماء جهات الاتصال والوسائط عبر الكيبل إلى الماك.",
+    s3_h: "النسخ الاحتياطي والتجهيز", s3_p: "نسخة كاملة من الآيفون تبقى على الماك كشبكة أمان، وتُضاف محادثات الأندرويد إلى جزء واتساب فيها.",
+    s4_h: "استعادة واتساب فقط", s4_p: "تعود بيانات واتساب وحدها إلى الآيفون. افتح واتساب واسحب للأعلى عبر السنين.",
+    real_k: "مصممة لجوالات حقيقية", real_h: "تشرح الأشياء التي تتعطل فعلًا",
+    l1_h: "مفتاح معروض من اليمين لليسار", l1_p: "الجوال بالعربي يعرض مربعات المفتاح من اليمين لليسار، فالمفتاح المكتوب من اليسار يفشل. وصلة تجرّب الاتجاهين وتعتمد الذي يفتح نسختك.",
+    l1_note: "أول مجموعة في أعلى اليمين.",
+    l2_h: "كيابل للشحن فقط", l2_p: "إذا لم يظهر الجوال تخبرك وصلة وتقترح كيبل آخر، قبل أن تضيع ساعة.",
+    l3_h: "زر تحديد الموقع رمادي", l3_p: "بعيدًا عن البيت تطلب حماية الجهاز المسروق انتظار ساعة، ووصلة توضح أين تبدأ الانتظار بأسماء قوائم الآيفون نفسها.",
+    l4_h: "طلبات رمز الدخول", l4_p: "يظهر تنبيه كبير عندما يطلب الآيفون رمز الدخول، وتوضح وصلة لماذا قد تبقى الاستعادة على 0٪ دقيقة.",
+    what_k: "ما الذي ينتقل", what_h: "تاريخك كاملًا، في المحادثات الصحيحة",
+    yes_h: "ينتقل إلى الآيفون", y1: "المحادثات الخاصة", y2: "المجموعات", y3: "الصور", y4: "الفيديوهات", y5: "الرسائل الصوتية", y6: "المستندات",
+    y7: "الملصقات والصور المتحركة", y8: "المواقع", y9: "جهات الاتصال", y10: "الرسائل المميزة بنجمة",
+    no_h: "لا ينتقل", n1: "سجل المكالمات", n2: "الحالات", n3: "الوسائط المحذوفة سابقًا من الأندرويد",
+    need_k: "ما تحتاجه", need_h: "ماك، والجوالين، وكيبلين جيدين",
+    r1_h: "ماك بنظام macOS 12 أو أحدث", r1_p: "بمعالج Apple أو Intel، مع مساحة لنسخة الآيفون الاحتياطية وتقريبًا ضعف حجم وسائط واتساب.",
+    r2_h: "جوال الأندرويد", r2_p: "واتساب (وليس واتساب للأعمال) مع تفعيل تصحيح أخطاء USB، ووصلة توضح الطريقة.",
+    r3_h: "الآيفون", r3_p: "واتساب مثبّت ومسجّل بنفس الرقم، وتحديد الموقع مطفأ أثناء النقل.",
+    r4_h: "ساعة أو ساعتان", r4_p: "معظمها نسخ، ووصلة تعرض النسبة والوقت المتبقي طوال الطريق.",
+    faq_k: "أسئلة", faq_h: "قبل أن تبدأ",
+    q1: "هل سيمسح هذا الآيفون؟", a1: "لا. تُستعاد بيانات واتساب فقط، وبعدها تظهر بعض شاشات الإعداد على الآيفون، وهذا طبيعي بعد أي استعادة.",
+    q2: "هل يُرفع أي شيء؟", a2: "لا. كل شيء ينتقل عبر الكيابل ويبقى على الماك. وصلة بدون حساب ولا ترسل أي شيء، والمفتاح يبقى في الذاكرة ولا يُحفظ أبدًا.",
+    q3: "ماذا لو بدا شيء غير صحيح بعد النقل؟", a3: "استخدم «تراجع» في الخطوة الأخيرة، فيرجع واتساب على الآيفون كما كان من النسخة التي احتفظت بها وصلة، ونسخة الآيفون الكاملة تبقى على الماك أيضًا.",
+    q4: "ماذا عن الرسائل التي تصل أثناء النقل؟", a4: "الرسائل التي تصل الأندرويد بعد آخر نسخة احتياطية تبقى عليه. وأثناء وضع الطيران على الآيفون تنتظر الرسائل الجديدة على خوادم واتساب وتصل بعد النقل.",
+    q5: "هل وصلة من واتساب؟", a5: "لا. وصلة برنامج مستقل ومجاني ومفتوح المصدر مبني على wamove، وليست من إنتاج واتساب أو ميتا أو أبل ولا تتبع لها، وتعتمد على صيغ غير موثقة. احتفظ بجوال الأندرويد كما هو حتى تتأكد من النتيجة.",
+    q6: "الماك يقول: لم يتم فتح «Wasla.app»", a6: "وصلة لم توثّقها أبل بعد، لذلك يسألك الماك مرة واحدة. اضغط «تم»، ثم افتح إعدادات النظام ← الخصوصية والأمن. تحت «الأمن» اضغط «فتح على أي حال» بجانب رسالة حظر Wasla.app، وأدخل كلمة سر الماك، ثم «فتح على أي حال» مرة أخرى.",
+    q7: "محادثاتي يظهر فيها مؤقت للرسائل المؤقتة", a7: "هذا إعداد في واتساب نفسه، ولا يحذف أبدًا الرسائل المرسلة قبل تشغيله. في واتساب: الإعدادات ← الخصوصية ← مؤقت الرسائل الافتراضي ← إيقاف. وإذا بقي المؤقت في محادثة، اضغط اسم المحادثة ← الرسائل المؤقتة ← إيقاف.",
+    final_h: "خذ محادثاتك معك",
+    foot: "وصلة برنامج حر بترخيص GNU GPL v3، مبني على wamove من alicin، ولا يتبع واتساب أو ميتا أو أبل. واتساب علامة تجارية لشركة WhatsApp LLC، وآيفون وماك علامتان تجاريتان لشركة Apple Inc.",
+    made: "صنعته",
+  };
+  const nodes = Array.from(document.querySelectorAll("[data-t]"));
+  const EN = Object.fromEntries(nodes.map((n) => [n.dataset.t, n.textContent]));
+  function setLang(lang) {
+    const table = lang === "ar" ? AR : EN;
+    document.documentElement.lang = lang;
+    document.documentElement.dir = lang === "ar" ? "rtl" : "ltr";
+    nodes.forEach((n) => { if (table[n.dataset.t]) n.textContent = table[n.dataset.t]; });
+    document.querySelectorAll("[data-img]").forEach((img) => {
+      img.src = `img/${img.dataset.img}-${lang}-${img.dataset.themeImg || "light"}@2x.png`;
+    });
+    document.querySelectorAll("[data-lang]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.lang === lang)));
+    document.title = lang === "ar" ? "وصلة" : "Wasla";
+    try { localStorage.setItem("wasla-lang", lang); } catch (e) { /* storage blocked */ }
+  }
+  document.querySelectorAll("[data-lang]").forEach((b) => b.addEventListener("click", () => setLang(b.dataset.lang)));
+  let saved = null;
+  try { saved = localStorage.getItem("wasla-lang"); } catch (e) { /* storage blocked */ }
+  const start = location.hash === "#ar" ? "ar" : location.hash === "#en" ? "en" : saved || ((navigator.language || "").startsWith("ar") ? "ar" : "en");
+  if (start === "ar") setLang("ar");
+})();
+</script>
+</body>
+</html>
