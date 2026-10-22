@@ -14,6 +14,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from wamove.cli import Work
+from wamove.ios import device
 
 from . import __version__
 from .engine import adbtool, android, build, checks, iphone, keygrid
@@ -57,7 +58,8 @@ class Api:
         self._password: str | None = None
         self._awake: subprocess.Popen | None = None
         self._lock = threading.Lock()
-        self._phone_backup = None  # the iPhone backed up during this session, so a retry skips the slow part
+        self._running = False
+        self._phone_backup = None  # kept only after a password error, so the retry skips the slow iPhone backup
         self._adb = adbtool.find(paths.support)
         if self._adb:
             adbtool.use(self._adb)
@@ -89,6 +91,7 @@ class Api:
     def go_back(self, step: str) -> dict:
         if step in STEPS and not self.busy():
             self._state.reset_from(step)
+            self._phone_backup = None
         return self.get_state()
 
     def check_connect(self) -> dict | None:
@@ -122,7 +125,7 @@ class Api:
         subprocess.run(["open", str(self._paths.work)], check=False)
 
     def busy(self) -> bool:
-        return self._job is not None and self._job.is_alive()
+        return self._running
 
     def cancel(self) -> None:
         if self._job_name in ("restore", "undo"):
@@ -168,6 +171,7 @@ class Api:
         """Delete the private copies once the user is happy. The full iPhone backup is kept unless asked."""
         if self.busy():
             return {"ok": False}
+        self._phone_backup = None
         targets = [self._work.android, self._work.build, self._work.patched, self._work.pristine]
         if not keep_iphone_backup:
             targets.append(self._work.full)
@@ -178,9 +182,22 @@ class Api:
         return {"ok": True, "free": checks.disk(self._paths.work)["free_bytes"]}
 
     def _backup(self) -> dict:
-        if self._phone_backup is None:
-            self._phone_backup = iphone.backup_phone(self._work, self._emit, self._password)
-        return iphone.keep_whatsapp(self._work, self._emit, self._phone_backup, self._password)
+        phone, self._phone_backup = self._phone_backup, None
+        if phone is not None:  # a retry after a password error: reuse it only for the same, still-saved iPhone
+            try:
+                same = device.phone().udid == phone.udid
+            except Exception:  # noqa: BLE001 - not connected or not trusted: back up again below
+                same = False
+            if not same or not (self._work.full / phone.udid / "Manifest.db").is_file():
+                phone = None
+        if phone is None:
+            phone = iphone.backup_phone(self._work, self._emit, self._password)
+        try:
+            return iphone.keep_whatsapp(self._work, self._emit, phone, self._password)
+        except Exception as exc:
+            if friendly(exc)[0].startswith("password_"):
+                self._phone_backup = phone
+            raise
 
     def _copy(self) -> dict:
         if self._key is None:
@@ -193,6 +210,7 @@ class Api:
         with self._lock:  # pywebview runs each call on its own thread; a double click must not start two jobs
             if self.busy():
                 return False
+            self._running = True
             self._cancel.clear()
             self._job_name = name
             self._job = threading.Thread(target=lambda: self._run(name, work, mark), name=f"wasla-{name}",
@@ -201,14 +219,22 @@ class Api:
         return True
 
     def _run(self, name: str, work: Callable[[], dict], mark: bool) -> None:
-        self._stay_awake(True)
+        """Run one job. Whatever happens, the window gets exactly one done or error event at the end."""
         started = time.time()
         log.info("job %s started", name)
+        event = None
         try:
+            self._stay_awake(True)
             result = work() or {}
             result["seconds"] = round(time.time() - started)
             log.info("job %s done in %ss: %s", name, result["seconds"],
                      {k: v for k, v in result.items() if isinstance(v, (int, float, str)) and k != "udid"})
+            if mark:
+                try:
+                    self._state.mark(name, **result)
+                except Exception:  # noqa: BLE001 - the job worked; a state-file hiccup must not report it failed
+                    log.exception("could not save state after %s", name)
+            event = Event(name, "done", pct=100, data=result)
         except BaseException as exc:  # noqa: BLE001 - every failure must reach the window
             code, data = friendly(exc)
             log.warning("job %s failed: %s", name, code, exc_info=code not in ("cancelled",))
@@ -216,16 +242,14 @@ class Api:
                 self._password = None  # ask again rather than retrying the same password
             if code == "unknown":
                 data["trace"] = traceback.format_exc()[-2000:]
-            self._emit(Event(name, "error", data={"code": code, **data}))
-            return
+            event = Event(name, "error", data={"code": code, **data})
         finally:
-            self._stay_awake(False)
-        if mark:
             try:
-                self._state.mark(name, **result)
-            except OSError:  # the job itself worked; a state file hiccup must not report it as failed
-                log.exception("could not save state after %s", name)
-        self._emit(Event(name, "done", pct=100, data=result))
+                self._stay_awake(False)
+            finally:
+                self._running = False  # before the event, so the window's refresh sees the job as finished
+                if event is not None:
+                    self._emit(event)
 
     def _stay_awake(self, on: bool) -> None:
         """Keep the Mac from sleeping mid-copy (and the display on, so the user sees prompts)."""

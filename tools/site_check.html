@@ -1,0 +1,22 @@
+<!doctype html><html><body>
+<script>
+// Load the site at several widths in both languages; report overflow, broken images and untranslated text.
+const cases = [["en", 390], ["ar", 390], ["en", 1280], ["ar", 1280], ["en", 768]];
+const results = [];
+let left = cases.length;
+for (const [lang, width] of cases) {
+  const f = document.createElement("iframe");
+  f.style.width = width + "px"; f.style.height = "900px";
+  f.src = "../site/index.html#" + lang;
+  f.onload = () => setTimeout(() => {
+    const d = f.contentDocument, w = f.contentWindow;
+    const over = d.documentElement.scrollWidth - w.innerWidth;
+    const wide = [...d.querySelectorAll("body *")].filter((el) => el.getBoundingClientRect().right > w.innerWidth + 1 && getComputedStyle(el).position !== "fixed").map((el) => el.tagName + "." + el.className).slice(0, 3);
+    const broken = [...d.images].filter((i) => !i.complete || i.naturalWidth === 0).map((i) => i.getAttribute("src"));
+    const latin = lang === "ar" ? [...d.querySelectorAll("[data-t]")].filter((el) => /^[A-Za-z][A-Za-z ,.'’]+$/.test(el.textContent.trim()) && el.textContent.trim().split(" ").length > 2).map((el) => el.dataset.t) : [];
+    results.push(`${lang}@${width}: overflow=${over} wide=${JSON.stringify(wide)} broken=${JSON.stringify(broken)} untranslated=${JSON.stringify(latin)} dir=${d.documentElement.dir}`);
+    if (--left === 0) { document.title = "DONE"; document.body.setAttribute("data-r", results.join("\n")); const pre = document.createElement("pre"); pre.id = "r"; pre.textContent = results.join("\n"); document.body.appendChild(pre); }
+  }, 1500);
+  document.body.appendChild(f);
+}
+</script></body></html>

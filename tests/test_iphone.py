@@ -100,3 +100,13 @@ def test_encrypted_restore_without_password_stops_before_the_phone(tmp_path, mon
 def test_undo_after_cleanup_says_nothing_to_restore(tmp_path):
     with pytest.raises(iphone.NothingToRestore):
         iphone.restore(Work(tmp_path), lambda e: None, source="pristine")
+
+
+def test_two_iphones_in_the_copies_is_not_reported_as_nothing_to_restore(tmp_path):
+    from wamove.cli import Failure
+    work = Work(tmp_path)
+    for udid in ("A", "B"):
+        (work.pristine / udid).mkdir(parents=True)
+        (work.pristine / udid / "Manifest.db").write_bytes(b"")
+    with pytest.raises(Failure):
+        iphone.restore(work, lambda e: None)

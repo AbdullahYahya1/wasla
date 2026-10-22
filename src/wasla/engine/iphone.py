@@ -11,7 +11,7 @@ import shutil
 from collections.abc import Callable
 from pathlib import Path
 
-from wamove.cli import CHATSTORAGE, Work
+from wamove.cli import CHATSTORAGE, Failure, Work
 from wamove.ios import backup as ios_backup
 from wamove.ios import device
 
@@ -85,8 +85,10 @@ def keep_whatsapp(work: Work, emit: Emit, phone: device.Phone, password: str | N
     full = work.full / phone.udid
     check_password(full, password)
     emit(Event(step, "progress", pct=None, phase="copy"))
-    for stale in (work.pristine / phone.udid, work.patched / phone.udid):
-        shutil.rmtree(stale, ignore_errors=True)
+    for folder in (work.pristine, work.patched):  # one iPhone at a time: drop copies from any earlier one too
+        if folder.is_dir():
+            for stale in folder.iterdir():
+                shutil.rmtree(stale, ignore_errors=True)
     ios_backup.clone_tree(full, work.pristine / phone.udid)
     with ios_backup.Backup(work.pristine / phone.udid, password) as saved:
         saved.prune()
@@ -108,8 +110,10 @@ def restore(work: Work, emit: Emit, source: str = "patched", password: str | Non
     root = work.patched if source == "patched" else work.pristine
     try:
         found = work.udid()
-    except Exception as e:
-        raise NothingToRestore() from e
+    except Failure as e:
+        if "no iPhone backup" in str(e):
+            raise NothingToRestore() from e
+        raise
     if not (root / found / "Manifest.db").is_file():
         raise NothingToRestore()
     check_password(root / found, password)

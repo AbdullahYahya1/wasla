@@ -112,9 +112,13 @@ def test_cleanup_keeps_the_iphone_backup_by_default(api):
     assert api._work.full.is_dir() and not api._work.android.exists() and not api._work.pristine.exists()
 
 
-def test_retry_after_wrong_password_skips_the_phone_backup(api, monkeypatch):
+def test_retry_after_wrong_password_skips_the_phone_backup(api, monkeypatch, tmp_path):
     phone_backups = []
-    monkeypatch.setattr(bridge.iphone, "backup_phone", lambda *a: phone_backups.append(1) or "PHONE")
+    ph = bridge.device.Phone(udid="U1", name="", ios="", encrypts_backups=True, used_bytes=1, find_my=False)
+    monkeypatch.setattr(bridge.iphone, "backup_phone", lambda *a: phone_backups.append(1) or ph)
+    monkeypatch.setattr(bridge.device, "phone", lambda udid=None: ph)
+    (api._work.full / "U1").mkdir(parents=True)
+    (api._work.full / "U1" / "Manifest.db").write_bytes(b"")
 
     def keep(work, emit, ph, password):
         if password != "right":
@@ -151,3 +155,36 @@ def test_double_start_from_two_threads_runs_one_job(api, monkeypatch):
         t.join()
     wait(api)
     assert runs == [1]
+
+
+def test_whatsapp_missing_retry_backs_up_the_iphone_again(api, monkeypatch):
+    phone_backups = []
+    monkeypatch.setattr(bridge.iphone, "backup_phone", lambda *a: phone_backups.append(1) or "PHONE")
+
+    def keep(work, emit, ph, password):
+        raise iphone.WhatsAppMissing()
+    monkeypatch.setattr(bridge.iphone, "keep_whatsapp", keep)
+    for _ in range(2):
+        api.start("backup")
+        wait(api)
+    assert phone_backups == [1, 1]  # the old backup has no WhatsApp in it, so it is never reused
+
+
+def test_job_that_cannot_start_caffeinate_still_reports(api, monkeypatch):
+    def broken(on):
+        if on:
+            raise OSError("fork failed")
+    monkeypatch.setattr(api, "_stay_awake", broken)
+    monkeypatch.setattr(bridge.iphone, "restore", lambda *a: {})
+    api.start("restore")
+    wait(api)
+    assert api.events[-1].kind == "error" and not api.busy()
+
+
+def test_not_busy_by_the_time_the_window_hears_done(api, monkeypatch):
+    seen = []
+    api._emit = bridge.Emitter(lambda e: seen.append((e.kind, api.busy())))
+    monkeypatch.setattr(bridge.iphone, "restore", lambda *a: {})
+    api.start("restore")
+    wait(api)
+    assert seen[-1] == ("done", False)
