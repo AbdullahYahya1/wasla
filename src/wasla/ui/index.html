@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Wasla</title>
+  <link rel="stylesheet" href="app.css">
+</head>
+<body>
+  <div class="app">
+    <header class="bar pywebview-drag-region">
+      <div class="brand" id="brand"></div>
+      <div class="spacer"></div>
+      <div class="seg" role="group" aria-label="Language">
+        <button type="button" data-lang="ar">العربية</button>
+        <button type="button" data-lang="en">English</button>
+      </div>
+      <button type="button" class="link-btn" id="help-btn"></button>
+    </header>
+    <div class="main">
+      <ol class="route" id="route"></ol>
+      <main class="page" id="page" tabindex="-1"></main>
+    </div>
+  </div>
+  <div class="scrim" id="scrim"></div>
+  <aside class="drawer" id="drawer" aria-hidden="true"></aside>
+  <dialog id="dialog"></dialog>
+  <script src="strings/en.js"></script>
+  <script src="strings/ar.js"></script>
+  <script src="icons.js"></script>
+  <script src="demo.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
