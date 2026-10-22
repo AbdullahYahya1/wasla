@@ -1,6 +1,6 @@
 [project]
 name = "wasla"
-version = "1.0.0"
+version = "1.0.1"
 description = "Move WhatsApp from an Android phone to an iPhone that is already set up, step by step"
 readme = "README.md"
 license = "GPL-3.0-or-later"

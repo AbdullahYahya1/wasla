@@ -4,7 +4,7 @@ from pathlib import Path
 from PyInstaller.utils.hooks import collect_all, collect_submodules
 
 ROOT = Path(SPECPATH).parent
-VERSION = "1.0.0"
+VERSION = "1.0.1"
 
 datas = [(str(ROOT / "src" / "wasla" / "ui"), "wasla/ui")]
 binaries = []

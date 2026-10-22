@@ -49,7 +49,8 @@ much faster thumbnails, and an Undo button.
 
 ## Install
 
-1. Download `Wasla-1.0.0.dmg` from [Releases](https://github.com/AbdullahYahya1/wasla/releases/latest).
+1. Download the `.dmg` for your Mac from [Releases](https://github.com/AbdullahYahya1/wasla/releases/latest):
+   `Wasla-<version>.dmg` for Apple silicon (M1 and later), `Wasla-<version>-intel.dmg` for Intel Macs.
 2. Open it and drag Wasla to Applications.
 3. Open Wasla. macOS says *"Wasla.app" Not Opened* because the app is not notarized by Apple yet. Click
    **Done**, then open **System Settings → Privacy & Security**, scroll to **Security** and click
@@ -58,7 +59,7 @@ much faster thumbnails, and an Undo button.
 
 ## What you need
 
-- A Mac with Apple silicon and macOS 12 or later (for Intel Macs, run from source)
+- A Mac with macOS 12 or later (Apple silicon or Intel)
 - The Android phone with WhatsApp (not WhatsApp Business) and USB debugging turned on
 - The iPhone with WhatsApp installed and set up with the same number
 - A cable for each phone that carries data, not only charge
@@ -91,7 +92,8 @@ uv run wasla
 ```
 
 Optional: `brew install ffmpeg` for video thumbnails. To build the app and disk image: `packaging/build.sh`
-(signs with a Developer ID certificate if one is in the keychain; set `WASLA_NOTARY_PROFILE` to notarize).
+(signs with a Developer ID certificate if one is in the keychain; set `WASLA_NOTARY_PROFILE` to notarize;
+`WASLA_ARCH=intel` builds the Intel version, see the comments at the top of the script).
 
 The website is `site/index.html`; `tools/publish_site.sh` publishes it to GitHub Pages.
 
