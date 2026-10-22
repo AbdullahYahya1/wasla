@@ -24,7 +24,7 @@ from wamove.model import Archive, Kind
 
 from ..events import Event
 from ..progress import Phases, Rate
-from .android import Cancelled
+from .android import Cancelled, NotEnoughSpace
 
 STEP = "prepare"
 THUMB_KINDS = (Kind.IMAGE, Kind.VIDEO, Kind.GIF)
@@ -156,6 +156,10 @@ def build(work: Work, emit: Emit, cancel: threading.Event, password: str | None 
     jobs = thumbnail_jobs(archive, media)
     workers = max(2, os.cpu_count() or 4)
     media_bytes = sum(f.stat().st_size for f in media.rglob("*") if f.is_file()) if media else 0
+    needed = media_bytes + 2 * 1024**3  # every media file is written again into the restore copy
+    free = shutil.disk_usage(work.root).free
+    if needed > free:
+        raise NotEnoughSpace(needed, free)
     phases = Phases(estimate(stats["messages"], len(jobs), stats["media"], media_bytes, workers))
     rate = Rate(100)
 

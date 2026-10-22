@@ -3,7 +3,7 @@ window.WASLA_ICONS = (() => {
   const s = (body, box = "0 0 24 24") =>
     `<svg viewBox="${box}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${body}</svg>`;
   return {
-    logo: `<svg viewBox="0 0 32 32" aria-hidden="true"><rect class="logo-bg" width="32" height="32" rx="9"/><path d="M8.5 21.5C10.5 13 21.5 13 23.5 21.5" fill="none" stroke="#FFB41F" stroke-width="3" stroke-linecap="round"/><circle cx="8.5" cy="21.5" r="3.2" fill="#fff"/><circle cx="23.5" cy="21.5" r="3.2" fill="#fff"/></svg>`,
+    logo: `<svg viewBox="0 0 32 32" aria-hidden="true"><rect class="logo-bg" width="32" height="32" rx="9"/><path d="M7.5 19.5C8.5 5 23.5 5 24.5 18" fill="none" stroke="#FFB41F" stroke-width="2.4" stroke-linecap="round" stroke-dasharray="0.6 4.12 0.6 4.12 0.6 4.12 0.6 4.12 0.6 40" stroke-dashoffset="-4.8"/><circle cx="7.5" cy="19.5" r="2.7" fill="#fff"/><circle cx="24.5" cy="19.5" r="4.6" fill="#FFB41F"/><circle class="logo-bg" cx="24.5" cy="19.5" r="1.9"/></svg>`,
     check: s('<path d="M5 12.5l4.5 4.5L19 7.5"/>'),
     android: s('<rect x="6" y="2.5" width="12" height="19" rx="2.6"/><circle cx="12" cy="5.3" r=".6" fill="currentColor"/><path d="M10 18.6h4"/>'),
     iphone: s('<rect x="6" y="2.5" width="12" height="19" rx="3.2"/><path d="M10.4 5h3.2"/>'),

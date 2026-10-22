@@ -42,10 +42,12 @@ def main() -> None:
     if not api._state.data.get("lang"):
         api.set_lang(mac_language())
 
+    smoke = os.environ.get("WASLA_SMOKE")  # packaged-app self test: write a report there and quit
     window = webview.create_window(
         "Wasla",
         url=str(UI),
         js_api=api,
+        hidden=bool(smoke),
         width=1080,
         height=740,
         min_size=(920, 640),
@@ -61,7 +63,29 @@ def main() -> None:
         return True
 
     window.events.closing += closing
-    webview.start(debug=bool(os.environ.get("WASLA_DEBUG")), private_mode=True)
+    if smoke:
+        webview.start(_self_test, (window, api, Path(smoke)), private_mode=True)
+    else:
+        webview.start(debug=bool(os.environ.get("WASLA_DEBUG")), private_mode=True)
+
+
+def _self_test(window, api: Api, report: Path) -> None:
+    import time
+
+    result: dict = {}
+    try:
+        for _ in range(100):
+            time.sleep(0.2)
+            if window.evaluate_js("document.querySelectorAll('.stop').length") == 9:
+                break
+        result["h1"] = window.evaluate_js("document.querySelector('h1').textContent")
+        result["font"] = window.evaluate_js("document.fonts.check('16px \"Readex Pro\"')")
+        result["checks"] = api.check_connect()
+        result["ok"] = True
+    except Exception as exc:  # noqa: BLE001
+        result["error"] = repr(exc)
+    report.write_text(json.dumps(result, ensure_ascii=False, default=str))
+    window.destroy()
 
 
 if __name__ == "__main__":

@@ -488,7 +488,7 @@
     clearTimeout(S.pollTimer);
     if (!kind || !api()) return;
     const tick = async () => {
-      if (!busy() || kind === "iphone") await pollOnce(kind);
+      if (!busy()) await pollOnce(kind);  // never poke the phones while a job is using them
       S.pollTimer = setTimeout(tick, 2000);
     };
     S.pollTimer = setTimeout(tick, S.checks[kind] ? 1500 : 50);
