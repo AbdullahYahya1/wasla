@@ -19,7 +19,7 @@ already set up, without erasing the iPhone. It is a friendly step-by-step front 
 - Approach A: a pywebview window (WKWebView) with an HTML/CSS/JS UI, the engine in Python in the same process.
 - A product website follows the app, in the same look (`site/`).
 
-## Decisions (made by Claude, changeable)
+## Decisions (made during the build, changeable)
 
 - Name: Wasla / وصلة. "Naqla" was taken by a Saudi truck-booking app.
 - Arabic and English UI, Arabic shown first when the Mac's language is Arabic. RTL is a first-class layout.
