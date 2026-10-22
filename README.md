@@ -3,7 +3,8 @@
 <h1 align="center">Wasla · وصلة</h1>
 
 <p align="center">Move WhatsApp from an Android phone to the iPhone you already use, <b>without erasing the iPhone</b>.<br>
-Free, open source, step by step, in English and Arabic.</p>
+Free, open source, step by step, in English and Arabic.<br>
+<a href="https://abdullahyahya1.github.io/wasla/">Website</a> · <a href="https://github.com/AbdullahYahya1/wasla/releases/latest">Download for Mac</a></p>
 
 ---
 
@@ -65,6 +66,8 @@ uv run wasla
 
 Optional: `brew install ffmpeg` for video thumbnails. To build the app and disk image: `packaging/build.sh`
 (signs with a Developer ID certificate if one is in the keychain; set `WASLA_NOTARY_PROFILE` to notarize).
+
+The website is `site/index.html`; `tools/publish_site.sh` publishes it to GitHub Pages.
 
 Developing: `uv run pytest` runs the tests; open `src/wasla/ui/index.html?demo=1` in a browser to click
 through every screen with a pretend engine; `python tools/screens.py` screenshots them all in both languages.
