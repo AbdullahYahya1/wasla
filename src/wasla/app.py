@@ -39,6 +39,12 @@ def main() -> None:
     logging.basicConfig(level=logging.WARNING, handlers=[handler])
     logging.getLogger("wasla").setLevel(logging.INFO)
     logging.getLogger("wasla").info("Wasla %s starting", __version__)
+    import threading
+
+    def thread_crash(args):  # a crash in pywebview's or our own threads would otherwise vanish
+        logging.getLogger("wasla").error("thread %s crashed", args.thread and args.thread.name,
+                                         exc_info=(args.exc_type, args.exc_value, args.exc_traceback))
+    threading.excepthook = thread_crash
     holder: dict = {}
 
     def send(event: Event) -> None:
@@ -46,14 +52,18 @@ def main() -> None:
         if window is not None:
             window.evaluate_js(f"window.wasla && wasla.onEvent({event.to_json()})")
 
-    api = Api(Paths.default(), send)
+    smoke = os.environ.get("WASLA_SMOKE")  # packaged-app self test: write a report there and quit
+    if smoke:  # never touch a real transfer's progress
+        import tempfile
+        api = Api(Paths(Path(tempfile.mkdtemp(prefix="wasla-selftest-"))), send)
+    else:
+        api = Api(Paths.default(), send)
     if not api._state.data.get("lang"):
         api.set_lang(mac_language())
 
-    smoke = os.environ.get("WASLA_SMOKE")  # packaged-app self test: write a report there and quit
     window = webview.create_window(
         "Wasla",
-        url=str(UI),
+        url=UI.as_uri(),  # file:// keeps pywebview from starting a local web server
         js_api=api,
         hidden=bool(smoke),
         width=1080,
@@ -89,7 +99,16 @@ def _self_test(window, api: Api, report: Path) -> None:
         result["h1"] = window.evaluate_js("document.querySelector('h1').textContent")
         result["font"] = window.evaluate_js("document.fonts.check('16px \"Readex Pro\"')")
         result["checks"] = api.check_connect()
-        result["ok"] = True
+        api._state.reset_from("welcome")
+        window.evaluate_js("wasla._go('welcome')")
+        time.sleep(0.5)
+        window.evaluate_js("document.querySelector('[data-act=mark]').click()")  # the window calls into Python
+        for _ in range(50):
+            time.sleep(0.2)
+            if api._state.done("welcome"):
+                break
+        result["bridge"] = api._state.done("welcome")
+        result["ok"] = bool(result["bridge"])
     except Exception as exc:  # noqa: BLE001
         result["error"] = repr(exc)
     report.write_text(json.dumps(result, ensure_ascii=False, default=str))

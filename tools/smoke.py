@@ -39,7 +39,7 @@ with tempfile.TemporaryDirectory() as tmp:
     holder = {}
     api = Api(Paths(Path(tmp)), lambda e: holder["w"].evaluate_js(f"window.wasla && wasla.onEvent({e.to_json()})"))
     api.set_lang("en")
-    window = webview.create_window("Wasla smoke", url=str(UI), js_api=api, hidden=True)
+    window = webview.create_window("Wasla smoke", url=UI.as_uri(), js_api=api, hidden=True)
     holder["w"] = window
     webview.start(probe, window)
 print(json.dumps(result, ensure_ascii=False))
