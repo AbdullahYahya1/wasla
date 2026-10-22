@@ -51,8 +51,10 @@ much faster thumbnails, and an Undo button.
 
 1. Download `Wasla-1.0.0.dmg` from [Releases](https://github.com/AbdullahYahya1/wasla/releases/latest).
 2. Open it and drag Wasla to Applications.
-3. The first time, right-click Wasla in Applications and choose **Open**, then **Open** again. macOS asks this
-   for apps that are not notarized by Apple yet.
+3. Open Wasla. macOS says *"Wasla.app" Not Opened* because the app is not notarized by Apple yet. Click
+   **Done**, then open **System Settings → Privacy & Security**, scroll to **Security** and click
+   **Open Anyway** next to "Wasla.app was blocked", enter your Mac password and click **Open Anyway** again.
+   You only do this once. (Or in Terminal: `xattr -dr com.apple.quarantine /Applications/Wasla.app`.)
 
 ## What you need
 
