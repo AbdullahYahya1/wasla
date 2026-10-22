@@ -83,6 +83,13 @@ much faster thumbnails, and an Undo button.
 
 Nothing is uploaded. The 64-digit key stays in memory and is never written to disk.
 
+## After the move
+
+- **Chats show a disappearing-messages timer (for example 90 days)?** That is WhatsApp's own setting, and it never
+  deletes messages sent before it was turned on. In WhatsApp: Settings → Privacy → Default message timer → Off.
+  If a chat still shows a timer, tap the chat's name → Disappearing messages → Off.
+- **WhatsApp's icon is faded?** Wait for it to download, or reinstall it from the App Store; the chats stay.
+
 ## Run from source
 
 ```sh

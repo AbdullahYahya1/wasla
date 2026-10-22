@@ -634,6 +634,7 @@
       ${qa("help.q_new", `<p>${esc(t("help.a_new"))}</p>`)}
       ${qa("help.q_upload", `<p>${esc(t("help.a_upload"))}</p>`)}
       ${qa("help.q_wrong", `<p>${esc(t("help.a_wrong"))}</p>`)}
+      ${qa("help.q_timer", `<p>${esc(t("help.a_timer"))}</p>`)}
       <p class="small muted" style="margin-top:20px">${esc(t("help.about", { v: S.state.version || "" }))}</p>
       <p><button type="button" class="btn quiet small" data-url="https://github.com/AbdullahYahya1/wasla">${esc(t("help.source"))}</button>
       <button type="button" class="btn quiet small" data-url="${ISSUES}">${esc(t("error.report"))}</button></p>`;

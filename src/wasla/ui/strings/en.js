@@ -250,5 +250,7 @@ window.WASLA_STRINGS.en = {
   "help.source": "Source code",
   "error.nothing_to_restore": "The copies Wasla restores from are no longer on this Mac, so there is nothing to put back.",
   "error.earlier_step_missing": "Something an earlier step made is missing from this Mac. Go back and run that step again.",
-  "common.password_again": "Enter the iPhone backup password to continue."
+  "common.password_again": "Enter the iPhone backup password to continue.",
+  "help.q_timer": "My chats show a disappearing-messages timer",
+  "help.a_timer": "That's WhatsApp's own setting, and it never deletes messages sent before it was turned on. In WhatsApp go to Settings → Privacy → Default message timer → Off. If a chat still shows a timer, tap the chat's name → Disappearing messages → Off."
 };
