@@ -1946,6 +1946,7 @@ name = "wasla"
 version = "1.0.0"
 source = { editable = "." }
 dependencies = [
+    { name = "pillow" },
     { name = "pymobiledevice3" },
     { name = "pywebview" },
     { name = "wamove" },
@@ -1959,6 +1960,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "pillow", specifier = ">=11" },
     { name = "pymobiledevice3", specifier = ">=11.19" },
     { name = "pywebview", specifier = ">=5.3" },
     { name = "wamove", git = "https://github.com/alicin/wamove.git?rev=989b268cbfa2e0bc3285a45161eb23dde55ecaeb" },

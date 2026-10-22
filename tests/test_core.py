@@ -64,3 +64,13 @@ def test_state_survives_bad_file(tmp_path):
     path = tmp_path / "state.json"
     path.write_text("{oops")
     assert State(path).load().current() == "welcome"
+
+
+def test_phases_weighted_overall():
+    from wasla.progress import Phases
+    phases = Phases({"a": 10, "b": 30, "c": 60})
+    assert phases.overall("a", 0) == 0
+    assert phases.overall("a", 1) == 10
+    assert phases.overall("b", 0.5) == 25
+    assert phases.overall("c", 1) == 100
+    assert phases.overall("c", 2) == 100

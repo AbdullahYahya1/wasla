@@ -33,3 +33,20 @@ class Rate:
         if self._samples < 3 or now - self._start < self.warmup_s or not self._speed or self._speed <= 0:
             return pct, None
         return pct, max(self.total - done, 0.0) / self._speed
+
+
+class Phases:
+    """One overall percent across phases that take different amounts of time.
+
+    `weights` are rough seconds per phase; only their ratios matter.
+    """
+
+    def __init__(self, weights: dict[str, float]):
+        self.order = list(weights)
+        self.weights = {k: max(float(v), 0.001) for k, v in weights.items()}
+        self.total = sum(self.weights.values())
+
+    def overall(self, phase: str, fraction: float) -> float:
+        before = sum(self.weights[p] for p in self.order[:self.order.index(phase)])
+        fraction = min(max(fraction, 0.0), 1.0)
+        return 100.0 * (before + fraction * self.weights[phase]) / self.total
