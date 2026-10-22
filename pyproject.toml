@@ -1,0 +1,33 @@
+[project]
+name = "wasla"
+version = "1.0.0"
+description = "Move WhatsApp from an Android phone to an iPhone that is already set up, step by step"
+readme = "README.md"
+license = "GPL-3.0-or-later"
+license-files = ["LICENSE"]
+requires-python = ">=3.13"
+dependencies = [
+    "wamove @ git+https://github.com/alicin/wamove.git@989b268cbfa2e0bc3285a45161eb23dde55ecaeb",
+    "pymobiledevice3>=11.19",
+    "pywebview>=5.3",
+]
+
+[project.scripts]
+wasla = "wasla.app:main"
+
+[dependency-groups]
+dev = ["pytest>=8", "pyinstaller>=6.10"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/wasla"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
