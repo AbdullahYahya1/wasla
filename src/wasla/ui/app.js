@@ -334,18 +334,23 @@
   views.ready = () => {
     const c = S.checks.ready || {};
     const p = c.iphone || {};
-    const waOk = p.whatsapp === true;
-    const fmOk = p.find_my === false;
     const ticks = S.ui.ticks;
+    // When the iPhone can't tell us (older iOS, a hiccup), the person confirms it instead of getting stuck.
+    const waUnknown = Boolean(c.iphone) && p.state === "ready" && p.whatsapp == null;
+    const fmUnknown = Boolean(c.iphone) && p.state === "ready" && p.find_my == null;
+    const waOk = p.whatsapp === true || (waUnknown && ticks.wa);
+    const fmOk = p.find_my === false || (fmUnknown && ticks.fm);
+    const confirm = (tick) => `<label class="manual below"><input type="checkbox" data-tick="${tick}" ${ticks[tick] ? "checked" : ""}>${esc(t("ready.register_done"))}</label>`;
     const waRow = !c.iphone ? checkRow("ck-wa", "busy", "", esc(t("ready.wa")), esc(t("common.checking")))
       : checkRow("ck-wa", waOk ? "ok" : "wait", I.chat, esc(t("ready.wa")),
-        waOk ? "" : esc(t(p.whatsapp_business ? "ready.wa_business" : "ready.wa_missing")),
-        waOk ? "" : `<button type="button" class="btn small quiet" data-url="${STORE}">${esc(t("ready.open_store"))}</button>`);
+        waOk && !waUnknown ? "" : esc(t(p.whatsapp_business ? "ready.wa_business" : "ready.wa_missing")),
+        waOk ? "" : `<button type="button" class="btn small quiet" data-url="${STORE}">${esc(t("ready.open_store"))}</button>`,
+        waUnknown ? confirm("wa") : "");
     const regRow = checkRow("ck-reg", ticks.register ? "ok" : "wait", I.key, esc(t("ready.register")), esc(t("ready.register_sub")), "",
       `<label class="manual below"><input type="checkbox" data-tick="register" ${ticks.register ? "checked" : ""}>${esc(t("ready.register_done"))}</label>`);
     const fmRow = !c.iphone ? checkRow("ck-fm", "busy", "", esc(t("ready.findmy")), "")
-      : checkRow("ck-fm", fmOk ? "ok" : "wait", I.pin, esc(t("ready.findmy")), fmOk ? "" : esc(t("ready.findmy_on")), "",
-        fmOk ? "" : details("grey", t("ready.findmy_grey"), list(["ready.grey_1", "ready.grey_2", "ready.grey_3"])));
+      : checkRow("ck-fm", fmOk ? "ok" : "wait", I.pin, esc(t("ready.findmy")), fmOk && !fmUnknown ? "" : esc(t("ready.findmy_on")), "",
+        (fmOk ? "" : details("grey", t("ready.findmy_grey"), list(["ready.grey_1", "ready.grey_2", "ready.grey_3"]))) + (fmUnknown ? confirm("fm") : ""));
     const offRow = checkRow("ck-off", ticks.offline ? "ok" : "wait", I.plane, esc(t("ready.offline")), esc(t("ready.offline_sub")), "",
       `<label class="manual below"><input type="checkbox" data-tick="offline" ${ticks.offline ? "checked" : ""}>${esc(t("ready.offline_done"))}</label>`);
     const all = waOk && fmOk && ticks.register && ticks.offline;
