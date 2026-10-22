@@ -6,10 +6,12 @@ import logging
 import os
 import subprocess
 import sys
+from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
 import webview
 
+from . import __version__
 from .bridge import Api, Paths
 from .events import Event
 
@@ -30,7 +32,13 @@ def main() -> None:
     # A Finder-launched app gets a bare PATH; ffmpeg (video thumbnails) usually lives in Homebrew.
     os.environ["PATH"] = os.pathsep.join([os.environ.get("PATH", "/usr/bin:/bin"), "/opt/homebrew/bin",
                                           "/usr/local/bin"])
-    logging.basicConfig(level=logging.WARNING)
+    logs = Path.home() / "Library" / "Logs" / "Wasla"
+    logs.mkdir(parents=True, exist_ok=True)
+    handler = RotatingFileHandler(logs / "wasla.log", maxBytes=2_000_000, backupCount=2, encoding="utf-8")
+    handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(name)s: %(message)s"))
+    logging.basicConfig(level=logging.WARNING, handlers=[handler])
+    logging.getLogger("wasla").setLevel(logging.INFO)
+    logging.getLogger("wasla").info("Wasla %s starting", __version__)
     holder: dict = {}
 
     def send(event: Event) -> None:

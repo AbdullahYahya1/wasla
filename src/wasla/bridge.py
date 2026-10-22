@@ -1,6 +1,7 @@
 """What the window can ask for. Each long job runs on one worker thread and reports through events."""
 from __future__ import annotations
 
+import logging
 import os
 import shutil
 import subprocess
@@ -19,6 +20,8 @@ from .engine import adbtool, android, build, checks, iphone, keygrid
 from .errors import friendly
 from .events import Emitter, Event
 from .state import STEPS, State
+
+log = logging.getLogger("wasla")
 
 ALLOWED_LINKS = ("https://github.com/", "https://support.apple.com/", "https://faq.whatsapp.com/",
                  "https://apps.apple.com/", "https://wasla.app/")
@@ -181,14 +184,18 @@ class Api:
         def run():
             self._stay_awake(True)
             started = time.time()
+            log.info("job %s started", name)
             try:
                 result = work() or {}
                 result["seconds"] = round(time.time() - started)
+                log.info("job %s done in %ss: %s", name, result["seconds"],
+                         {k: v for k, v in result.items() if isinstance(v, (int, float, str)) and k != "udid"})
                 if mark:
                     self._state.mark(name, **result)
                 self._emit(Event(name, "done", pct=100, data=result))
             except BaseException as exc:  # noqa: BLE001 - every failure must reach the window
                 code, data = friendly(exc)
+                log.warning("job %s failed: %s", name, code, exc_info=code not in ("cancelled",))
                 if code == "unknown":
                     data["trace"] = traceback.format_exc()[-2000:]
                 self._emit(Event(name, "error", data={"code": code, **data}))
