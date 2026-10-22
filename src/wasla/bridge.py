@@ -56,6 +56,8 @@ class Api:
         self._key: bytes | None = None
         self._password: str | None = None
         self._awake: subprocess.Popen | None = None
+        self._lock = threading.Lock()
+        self._phone_backup = None  # the iPhone backed up during this session, so a retry skips the slow part
         self._adb = adbtool.find(paths.support)
         if self._adb:
             adbtool.use(self._adb)
@@ -89,17 +91,23 @@ class Api:
             self._state.reset_from(step)
         return self.get_state()
 
-    def check_connect(self) -> dict:
+    def check_connect(self) -> dict | None:
+        if self.busy():  # never poke the phones while a job is using them
+            return None
         return {
             "android": checks.android(self._adb),
             "iphone": checks.iphone(),
             "disk": checks.disk(self._paths.work),
         }
 
-    def check_ready(self) -> dict:
+    def check_ready(self) -> dict | None:
+        if self.busy():
+            return None
         return {"iphone": checks.iphone(with_apps=True), "android": checks.android(self._adb)}
 
-    def check_iphone(self) -> dict:
+    def check_iphone(self) -> dict | None:
+        if self.busy():
+            return None
         return checks.iphone()
 
     def set_password(self, password: str) -> None:
@@ -135,6 +143,7 @@ class Api:
 
     def check_key(self, text: str) -> bool:
         def job():
+            self._key = None
             keygrid.candidates(text)  # format problems first, before touching the phone
             self._emit(Event("key", "progress", pct=None, phase="sample"))
             sample = android.sample(self._work)
@@ -146,7 +155,7 @@ class Api:
     def start(self, step: str) -> bool:
         jobs = {
             "copy": self._copy,
-            "backup": lambda: iphone.backup(self._work, self._emit, self._password),
+            "backup": self._backup,
             "prepare": lambda: build.build(self._work, self._emit, self._cancel, self._password),
             "restore": lambda: iphone.restore(self._work, self._emit, "patched", self._password),
             "undo": lambda: iphone.restore(self._work, self._emit, "pristine", self._password),
@@ -168,6 +177,11 @@ class Api:
         self._state.mark("finish", cleaned=True, kept_backup=keep_iphone_backup)
         return {"ok": True, "free": checks.disk(self._paths.work)["free_bytes"]}
 
+    def _backup(self) -> dict:
+        if self._phone_backup is None:
+            self._phone_backup = iphone.backup_phone(self._work, self._emit, self._password)
+        return iphone.keep_whatsapp(self._work, self._emit, self._phone_backup, self._password)
+
     def _copy(self) -> dict:
         if self._key is None:
             raise keygrid.KeyProblem("key_missing")
@@ -176,35 +190,42 @@ class Api:
         return {**result, **summary}
 
     def _start(self, name: str, work: Callable[[], dict], mark: bool = True) -> bool:
-        if self.busy():
-            return False
-        self._cancel.clear()
-        self._job_name = name
-
-        def run():
-            self._stay_awake(True)
-            started = time.time()
-            log.info("job %s started", name)
-            try:
-                result = work() or {}
-                result["seconds"] = round(time.time() - started)
-                log.info("job %s done in %ss: %s", name, result["seconds"],
-                         {k: v for k, v in result.items() if isinstance(v, (int, float, str)) and k != "udid"})
-                if mark:
-                    self._state.mark(name, **result)
-                self._emit(Event(name, "done", pct=100, data=result))
-            except BaseException as exc:  # noqa: BLE001 - every failure must reach the window
-                code, data = friendly(exc)
-                log.warning("job %s failed: %s", name, code, exc_info=code not in ("cancelled",))
-                if code == "unknown":
-                    data["trace"] = traceback.format_exc()[-2000:]
-                self._emit(Event(name, "error", data={"code": code, **data}))
-            finally:
-                self._stay_awake(False)
-
-        self._job = threading.Thread(target=run, name=f"wasla-{name}", daemon=True)
-        self._job.start()
+        with self._lock:  # pywebview runs each call on its own thread; a double click must not start two jobs
+            if self.busy():
+                return False
+            self._cancel.clear()
+            self._job_name = name
+            self._job = threading.Thread(target=lambda: self._run(name, work, mark), name=f"wasla-{name}",
+                                         daemon=True)
+            self._job.start()
         return True
+
+    def _run(self, name: str, work: Callable[[], dict], mark: bool) -> None:
+        self._stay_awake(True)
+        started = time.time()
+        log.info("job %s started", name)
+        try:
+            result = work() or {}
+            result["seconds"] = round(time.time() - started)
+            log.info("job %s done in %ss: %s", name, result["seconds"],
+                     {k: v for k, v in result.items() if isinstance(v, (int, float, str)) and k != "udid"})
+        except BaseException as exc:  # noqa: BLE001 - every failure must reach the window
+            code, data = friendly(exc)
+            log.warning("job %s failed: %s", name, code, exc_info=code not in ("cancelled",))
+            if code.startswith("password_"):
+                self._password = None  # ask again rather than retrying the same password
+            if code == "unknown":
+                data["trace"] = traceback.format_exc()[-2000:]
+            self._emit(Event(name, "error", data={"code": code, **data}))
+            return
+        finally:
+            self._stay_awake(False)
+        if mark:
+            try:
+                self._state.mark(name, **result)
+            except OSError:  # the job itself worked; a state file hiccup must not report it as failed
+                log.exception("could not save state after %s", name)
+        self._emit(Event(name, "done", pct=100, data=result))
 
     def _stay_awake(self, on: bool) -> None:
         """Keep the Mac from sleeping mid-copy (and the display on, so the user sees prompts)."""

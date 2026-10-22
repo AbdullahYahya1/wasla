@@ -1,10 +1,17 @@
 import logging
+import plistlib
 
 import pytest
 from wamove.cli import Work
 from wamove.ios import device
 
 from wasla.engine import iphone
+
+
+def fake_backup(root, encrypted=False):
+    (root / "UDID1").mkdir(parents=True)
+    (root / "UDID1" / "Manifest.db").write_bytes(b"")
+    (root / "UDID1" / "Manifest.plist").write_bytes(plistlib.dumps({"IsEncrypted": encrypted}))
 
 
 def phone(**over):
@@ -30,10 +37,8 @@ def test_passcode_prompt_becomes_an_event():
 
 def test_restore_refuses_while_find_my_is_on(tmp_path, monkeypatch):
     work = Work(tmp_path)
-    (work.pristine / "UDID1").mkdir(parents=True)
-    (work.pristine / "UDID1" / "Manifest.db").write_bytes(b"")
-    (work.patched / "UDID1").mkdir(parents=True)
-    (work.patched / "UDID1" / "Manifest.db").write_bytes(b"")
+    fake_backup(work.pristine)
+    fake_backup(work.patched)
     monkeypatch.setattr(device, "phone", lambda udid=None: phone(find_my=True))
     called = []
     monkeypatch.setattr(iphone, "_run_restore", lambda *a: called.append(a))
@@ -45,9 +50,9 @@ def test_restore_refuses_while_find_my_is_on(tmp_path, monkeypatch):
 def test_restore_reports_progress(tmp_path, monkeypatch):
     work = Work(tmp_path)
     for root in (work.pristine, work.patched):
-        (root / "UDID1").mkdir(parents=True)
-        (root / "UDID1" / "Manifest.db").write_bytes(b"")
-    monkeypatch.setattr(device, "phone", lambda udid=None: phone())
+        fake_backup(root)
+    asked = []
+    monkeypatch.setattr(device, "phone", lambda udid=None: asked.append(udid) or phone())
 
     def fake_restore(root, source, password, udid, progress):
         assert root == work.patched and source == "UDID1"
@@ -57,12 +62,12 @@ def test_restore_reports_progress(tmp_path, monkeypatch):
     events = []
     iphone.restore(work, events.append)
     assert events[-1].pct == 100
+    assert asked == ["UDID1"]  # only the iPhone the backup came from
 
 
 def test_undo_restores_the_untouched_copy(tmp_path, monkeypatch):
     work = Work(tmp_path)
-    (work.pristine / "UDID1").mkdir(parents=True)
-    (work.pristine / "UDID1" / "Manifest.db").write_bytes(b"")
+    fake_backup(work.pristine)
     monkeypatch.setattr(device, "phone", lambda udid=None: phone())
     seen = []
     monkeypatch.setattr(iphone, "_run_restore", lambda root, *a: seen.append(root))
@@ -81,3 +86,17 @@ def test_backup_needs_space(tmp_path, monkeypatch):
     monkeypatch.setattr(device, "phone", lambda udid=None: phone(used_bytes=10**15))
     with pytest.raises(iphone.NotEnoughSpace):
         iphone.backup(Work(tmp_path), lambda e: None)
+
+
+def test_encrypted_restore_without_password_stops_before_the_phone(tmp_path, monkeypatch):
+    work = Work(tmp_path)
+    fake_backup(work.pristine, encrypted=True)
+    fake_backup(work.patched, encrypted=True)
+    monkeypatch.setattr(device, "phone", lambda udid=None: pytest.fail("must not touch the phone"))
+    with pytest.raises(iphone.PasswordNeeded):
+        iphone.restore(work, lambda e: None)
+
+
+def test_undo_after_cleanup_says_nothing_to_restore(tmp_path):
+    with pytest.raises(iphone.NothingToRestore):
+        iphone.restore(Work(tmp_path), lambda e: None, source="pristine")

@@ -47,7 +47,8 @@ def test_friendly_codes(exc, code):
 
 
 def test_job_success_marks_state_and_emits_done(api, monkeypatch):
-    monkeypatch.setattr(bridge.iphone, "backup", lambda work, emit, password: {"udid": "U", "entries": 3})
+    monkeypatch.setattr(bridge.iphone, "backup_phone", lambda work, emit, password: "PHONE")
+    monkeypatch.setattr(bridge.iphone, "keep_whatsapp", lambda work, emit, ph, password: {"udid": "U", "entries": 3})
     assert api.start("backup")
     wait(api)
     assert api._state.done("backup") and api._state.get("backup")["entries"] == 3
@@ -71,7 +72,8 @@ def test_copy_without_key_asks_for_it(api):
 
 
 def test_only_one_job_at_a_time(api, monkeypatch):
-    monkeypatch.setattr(bridge.iphone, "backup", lambda *a: time.sleep(0.3) or {})
+    monkeypatch.setattr(bridge.iphone, "backup_phone", lambda *a: time.sleep(0.3) or "PHONE")
+    monkeypatch.setattr(bridge.iphone, "keep_whatsapp", lambda *a: {})
     assert api.start("backup")
     assert not api.start("prepare")
     wait(api)
@@ -108,3 +110,44 @@ def test_cleanup_keeps_the_iphone_backup_by_default(api):
         folder.mkdir(parents=True)
     api.cleanup()
     assert api._work.full.is_dir() and not api._work.android.exists() and not api._work.pristine.exists()
+
+
+def test_retry_after_wrong_password_skips_the_phone_backup(api, monkeypatch):
+    phone_backups = []
+    monkeypatch.setattr(bridge.iphone, "backup_phone", lambda *a: phone_backups.append(1) or "PHONE")
+
+    def keep(work, emit, ph, password):
+        if password != "right":
+            raise ios_backup.BackupError("the backup password is wrong")
+        return {"entries": 1}
+    monkeypatch.setattr(bridge.iphone, "keep_whatsapp", keep)
+    api.set_password("wrong")
+    api.start("backup")
+    wait(api)
+    assert api.events[-1].data["code"] == "password_wrong"
+    assert not api.get_state()["has_password"]  # the window asks again
+    api.set_password("right")
+    api.start("backup")
+    wait(api)
+    assert api.events[-1].kind == "done" and phone_backups == [1]
+
+
+def test_checks_wait_while_a_job_runs(api, monkeypatch):
+    monkeypatch.setattr(bridge.iphone, "restore", lambda *a: time.sleep(0.3) or {})
+    monkeypatch.setattr(bridge.checks, "iphone", lambda **k: pytest.fail("must not poll during a job"))
+    api.start("restore")
+    assert api.check_iphone() is None and api.check_connect() is None and api.check_ready() is None
+    wait(api)
+
+
+def test_double_start_from_two_threads_runs_one_job(api, monkeypatch):
+    import threading
+    runs = []
+    monkeypatch.setattr(bridge.build, "build", lambda *a: runs.append(1) or time.sleep(0.2) or {})
+    threads = [threading.Thread(target=api.start, args=("prepare",)) for _ in range(8)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+    wait(api)
+    assert runs == [1]

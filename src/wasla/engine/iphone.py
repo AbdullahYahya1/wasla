@@ -44,7 +44,21 @@ def _progress(step: str, emit: Emit) -> Callable[[float], None]:
     return report
 
 
-def backup(work: Work, emit: Emit, password: str | None = None, udid: str | None = None) -> dict:
+class NothingToRestore(Exception):
+    pass
+
+
+def check_password(path: Path, password: str | None) -> None:
+    """Fail fast, before any phone work, when an encrypted backup's password is missing or wrong."""
+    if not ios_backup.is_encrypted(path):
+        return
+    if not password:
+        raise PasswordNeeded()
+    ios_backup.Backup(path, password).close()  # raises BackupError("the backup password is wrong")
+
+
+def backup_phone(work: Work, emit: Emit, password: str | None = None, udid: str | None = None) -> device.Phone:
+    """The full iPhone backup into work/ios/full (the slow part)."""
     step = "backup"
     phone = device.phone(udid)
     work.root.mkdir(mode=0o700, parents=True, exist_ok=True)
@@ -53,17 +67,23 @@ def backup(work: Work, emit: Emit, password: str | None = None, udid: str | None
         raise NotEnoughSpace(phone.used_bytes, free)
     if phone.encrypts_backups and not password:
         raise PasswordNeeded()
-    sink = _Sink(step, emit)
-    handler = _Handler(sink)
+    handler = _Handler(_Sink(step, emit))
     logger = logging.getLogger(LOGGER)
     logger.setLevel(logging.INFO)
     logger.addHandler(handler)
     try:
         emit(Event(step, "progress", pct=0, phase="phone"))
-        _run_backup(work.full, udid, _progress(step, emit))
+        _run_backup(work.full, phone.udid, _progress(step, emit))
     finally:
         logger.removeHandler(handler)
+    return phone
+
+
+def keep_whatsapp(work: Work, emit: Emit, phone: device.Phone, password: str | None = None) -> dict:
+    """Copy the full backup and prune it to WhatsApp's data (wamove's "pristine" copy)."""
+    step = "backup"
     full = work.full / phone.udid
+    check_password(full, password)
     emit(Event(step, "progress", pct=None, phase="copy"))
     for stale in (work.pristine / phone.udid, work.patched / phone.udid):
         shutil.rmtree(stale, ignore_errors=True)
@@ -74,27 +94,35 @@ def backup(work: Work, emit: Emit, password: str | None = None, udid: str | None
             raise WhatsAppMissing()
         count = saved.count()
     emit(Event(step, "progress", pct=100, phase="copy"))
-    return {"udid": phone.udid, "entries": count, "used_bytes": phone.used_bytes}
+    return {"udid": phone.udid, "entries": count, "used_bytes": phone.used_bytes,
+            "encrypted": ios_backup.is_encrypted(full)}
 
 
-def restore(work: Work, emit: Emit, source: str = "patched", password: str | None = None,
-            udid: str | None = None) -> dict:
+def backup(work: Work, emit: Emit, password: str | None = None, udid: str | None = None) -> dict:
+    return keep_whatsapp(work, emit, backup_phone(work, emit, password, udid), password)
+
+
+def restore(work: Work, emit: Emit, source: str = "patched", password: str | None = None) -> dict:
+    """Restore the patched copy (or, for Undo, the untouched one) to the same iPhone that was backed up."""
     step = "restore" if source == "patched" else "undo"
     root = work.patched if source == "patched" else work.pristine
-    found = work.udid()
+    try:
+        found = work.udid()
+    except Exception as e:
+        raise NothingToRestore() from e
     if not (root / found / "Manifest.db").is_file():
-        raise FileNotFoundError(f"nothing to restore in {root}")
-    phone = device.phone(udid)
+        raise NothingToRestore()
+    check_password(root / found, password)
+    phone = device.phone(found)  # only the iPhone this backup came from
     if phone.find_my:
         raise FindMyOn()
-    sink = _Sink(step, emit)
-    handler = _Handler(sink)
+    handler = _Handler(_Sink(step, emit))
     logger = logging.getLogger(LOGGER)
     logger.setLevel(logging.INFO)
     logger.addHandler(handler)
     try:
         emit(Event(step, "progress", pct=0, phase="phone"))
-        _run_restore(root, found, password, udid, _progress(step, emit))
+        _run_restore(root, found, password, found, _progress(step, emit))
     finally:
         logger.removeHandler(handler)
     emit(Event(step, "progress", pct=100, phase="phone"))

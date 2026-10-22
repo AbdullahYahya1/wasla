@@ -25,6 +25,7 @@ from wamove.model import Archive, Kind
 from ..events import Event
 from ..progress import Phases, Rate
 from .android import Cancelled, NotEnoughSpace
+from .iphone import check_password as iphone_check_password
 
 STEP = "prepare"
 THUMB_KINDS = (Kind.IMAGE, Kind.VIDEO, Kind.GIF)
@@ -36,18 +37,23 @@ class BuildFailed(Exception):
     pass
 
 
+def thumb_key(kind: Kind, local: str) -> tuple[str, str]:
+    """Photos and videos are thumbnailed differently, so the same file can need both."""
+    return ("image" if kind is Kind.IMAGE else "video", local)
+
+
 def thumbnail_jobs(archive: Archive, media_root: Path | None) -> list[tuple[Kind, str]]:
     if media_root is None:
         return []
-    seen: dict[str, Kind] = {}
+    seen: dict[tuple[str, str], Kind] = {}
     root = str(media_root)
     for chat in archive.chats:
         for message in chat.messages:
             if message.kind in THUMB_KINDS and message.media and message.media.android_path:
                 local = chatstorage._locate(message.media.android_path, root)
-                if local and local not in seen:
-                    seen[local] = message.kind
-    return [(kind, local) for local, kind in seen.items()]
+                if local:
+                    seen.setdefault(thumb_key(message.kind, local), message.kind)
+    return [(kind, key[1]) for key, kind in seen.items()]
 
 
 def image_thumb(source: str, target: Path) -> tuple[int, int] | None:
@@ -72,25 +78,26 @@ def image_thumb(source: str, target: Path) -> tuple[int, int] | None:
         return thumbs.image(source, target)
 
 
-def _one(kind: Kind, local: str, cache: Path) -> tuple[str, Cached]:
-    target = cache / (hashlib.sha1(local.encode()).hexdigest() + ".thumb")
+def _one(kind: Kind, local: str, cache: Path) -> tuple[tuple[str, str], Cached]:
+    key = thumb_key(kind, local)
+    target = cache / (hashlib.sha1("|".join(key).encode()).hexdigest() + ".thumb")
     if kind is Kind.IMAGE:
         size = image_thumb(local, target)
-        return local, ((target, size) if size else (None, None))
-    return local, ((target, None) if thumbs.video(local, target) else (None, None))
+        return key, ((target, size) if size else (None, None))
+    return key, ((target, None) if thumbs.video(local, target) else (None, None))
 
 
 def make_thumbnails(jobs: list[tuple[Kind, str]], cache: Path, on_done: Callable[[int], None],
-                    cancel: threading.Event, workers: int | None = None) -> dict[str, Cached]:
+                    cancel: threading.Event, workers: int | None = None) -> dict[tuple[str, str], Cached]:
     cache.mkdir(parents=True, exist_ok=True)
-    results: dict[str, Cached] = {}
+    results: dict[tuple[str, str], Cached] = {}
     workers = workers or max(2, (os.cpu_count() or 4))
     with ThreadPoolExecutor(max_workers=workers) as pool:
         futures = [pool.submit(_one, kind, local, cache) for kind, local in jobs]
         try:
             for done, future in enumerate(as_completed(futures), 1):
-                local, made = future.result()
-                results[local] = made
+                key, made = future.result()
+                results[key] = made
                 on_done(done)
                 if cancel.is_set():
                     raise Cancelled()
@@ -104,18 +111,19 @@ def make_thumbnails(jobs: list[tuple[Kind, str]], cache: Path, on_done: Callable
 class ProgressWriter(chatstorage.Writer):
     """wamove's Writer, taking thumbnails from the cache and counting messages as chats go in."""
 
-    def __init__(self, path: Path, lids: dict[str, str] | None, cache: dict[str, Cached],
+    def __init__(self, path: Path, lids: dict[str, str] | None, cache: dict[tuple[str, str], Cached],
                  on_messages: Callable[[int], None]):
         super().__init__(path, lids)
         self.cache = cache
         self.on_messages = on_messages
 
     def _thumbnail(self, kind, local, name):
-        if self.thumbnails is None:
-            return None
-        if local not in self.cache:
+        if self.thumbnails is None or kind not in THUMB_KINDS:
             return super()._thumbnail(kind, local, name)
-        made, size = self.cache[local]
+        key = thumb_key(kind, local)
+        if key not in self.cache:
+            return super()._thumbnail(kind, local, name)
+        made, size = self.cache[key]
         if made is None or not made.is_file():
             return None
         target = self.thumbnails / f"{name}.thumb"
@@ -145,6 +153,7 @@ def estimate(messages: int, thumbs_to_make: int, media_files: int, media_bytes: 
 def build(work: Work, emit: Emit, cancel: threading.Event, password: str | None = None) -> dict:
     udid = work.udid()
     pristine = work.pristine / udid
+    iphone_check_password(pristine, password)
     emit(Event(STEP, "progress", pct=0, phase="read"))
     archive = load_archive(work, None)
     stats = archive.stats()

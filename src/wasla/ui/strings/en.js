@@ -247,5 +247,8 @@ window.WASLA_STRINGS.en = {
   "help.q_wrong": "Something looks wrong after the move",
   "help.a_wrong": "Use Undo on the last step. It puts WhatsApp on the iPhone back as it was, using the copy Wasla kept.",
   "help.about": "Wasla {v} is free and open source (GPL-3.0), built on wamove by alicin. It is not affiliated with WhatsApp, Meta or Apple.",
-  "help.source": "Source code"
+  "help.source": "Source code",
+  "error.nothing_to_restore": "The copies Wasla restores from are no longer on this Mac, so there is nothing to put back.",
+  "error.earlier_step_missing": "Something an earlier step made is missing from this Mac. Go back and run that step again.",
+  "common.password_again": "Enter the iPhone backup password to continue."
 };

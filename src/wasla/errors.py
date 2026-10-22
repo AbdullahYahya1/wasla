@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from wamove.android import adb, crypt15, msgstore
+from wamove.cli import Failure
 from wamove.ios import backup as ios_backup
 from wamove.ios import chatstorage, device
 
@@ -46,6 +47,10 @@ def friendly(exc: BaseException) -> tuple[str, dict]:
         if "no iPhone" in text:
             return "no_iphone", {}
         return "iphone_error", {"detail": text[:300]}
+    if isinstance(exc, iphone.NothingToRestore):
+        return "nothing_to_restore", {}
+    if isinstance(exc, Failure):
+        return "earlier_step_missing", {"detail": text[:300]}
     if isinstance(exc, iphone.FindMyOn):
         return "find_my_on", {}
     if isinstance(exc, iphone.PasswordNeeded):

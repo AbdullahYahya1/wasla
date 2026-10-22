@@ -68,7 +68,8 @@ def test_writer_uses_the_cache(tmp_path):
     writer = build.ProgressWriter.__new__(build.ProgressWriter)
     writer.thumbnails = tmp_path / "thumbs"
     writer.thumbnails.mkdir()
-    writer.cache = {"/m/a.jpg": (made, (10, 20)), "/m/b.mp4": (made, None), "/m/c.jpg": (None, None)}
+    writer.cache = {("image", "/m/a.jpg"): (made, (10, 20)), ("video", "/m/b.mp4"): (made, None),
+                    ("image", "/m/c.jpg"): (None, None)}
     target, size = writer._thumbnail(Kind.IMAGE, "/m/a.jpg", "n1")
     assert target == writer.thumbnails / "n1.thumb" and target.read_bytes() == b"jpeg" and size == (10, 20)
     assert writer._thumbnail(Kind.VIDEO, "/m/b.mp4", "n2") == (writer.thumbnails / "n2.thumb", None)
@@ -79,3 +80,22 @@ def test_estimate_has_every_phase():
     est = build.estimate(558855, 28444, 136642, 23_300_000_000, 10)
     assert list(est) == ["read", "thumbnails", "chats", "media", "check"]
     assert 20 < est["thumbnails"] < 40
+
+
+def test_cache_keeps_photo_and_video_thumbnails_apart(tmp_path):
+    media = tmp_path / "Media"
+    (media / "WhatsApp Images").mkdir(parents=True)
+    photo(media / "WhatsApp Images" / "X.jpg")
+    chat = Chat(jid="1@s.whatsapp.net", messages=[
+        message("a", Kind.IMAGE, "Media/WhatsApp Images/X.jpg"),
+        message("b", Kind.VIDEO, "Media/WhatsApp Images/X.jpg"),
+    ])
+    jobs = build.thumbnail_jobs(Archive(chats=[chat]), media)
+    assert sorted(k.value for k, _ in jobs) == ["image", "video"]
+
+
+def test_documents_never_get_a_thumbnail(tmp_path):
+    writer = build.ProgressWriter.__new__(build.ProgressWriter)
+    writer.thumbnails = tmp_path
+    writer.cache = {}
+    assert writer._thumbnail(Kind.DOCUMENT, "/m/a.pdf", "n") is None

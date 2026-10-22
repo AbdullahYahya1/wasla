@@ -132,6 +132,19 @@
   }
   function list(items) { return `<ol class="howto">${items.map((k) => `<li>${esc(t(k))}</li>`).join("")}</ol>`; }
 
+  function encrypted() {
+    return Boolean((S.state.steps.backup || {}).encrypted || ((S.checks.connect || {}).iphone || {}).encrypted);
+  }
+  function needsPassword(step) {
+    const code = (S.errors[step] || {}).code || "";
+    return (encrypted() && !S.state.has_password) || code.startsWith("password_");
+  }
+  function passwordField(step) {
+    if (!needsPassword(step) || (S.live[step] || {}).running) return "";
+    return `<h2>${esc(t("backup.password_title"))}</h2><p class="muted small">${esc(t("backup.password_sub"))}</p>
+      <label class="field"><span>${esc(t("backup.password"))}</span><input type="password" id="pw" autocomplete="off"></label>`;
+  }
+
   function errorCard(step) {
     const err = S.errors[step];
     if (!err) return "";
@@ -259,7 +272,7 @@
     else if (result && S.state.has_key) status = `<p class="status-line ok">${I.check}<span>${esc(t(result.order === "rows_rtl" ? "key.ok_rtl" : "key.ok"))}</span></p>`;
     const keyOk = Boolean(result && S.state.has_key);
     const boxes = Array.from({ length: 16 }, (_, i) =>
-      `<input inputmode="latin" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="64" aria-label="${i + 1}" data-key="${i}" value="${esc((S.ui.keyBoxes || [])[i] || "")}">`).join("");
+      `<input inputmode="latin" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="200" aria-label="${i + 1}" data-key="${i}" value="${esc((S.ui.keyBoxes || [])[i] || "")}">`).join("");
     return {
       body: `${errorCard("key")}<div class="split">
         <div>
@@ -346,7 +359,6 @@
   views.backup = () => {
     const live = S.live.backup || {};
     const result = done("backup") ? S.state.steps.backup : null;
-    const encrypted = ((S.checks.connect || {}).iphone || {}).encrypted || S.errors.backup?.code === "password_needed" || S.errors.backup?.code === "password_wrong";
     const banner = live.need === "passcode" ? `<div class="banner attention" role="alert"><div class="ic">${I.lock}</div><div><strong>${esc(t("backup.passcode"))}</strong><span class="muted">${esc(t("backup.passcode_sub"))}</span></div></div>` : "";
     if (result && !live.running) {
       return {
@@ -355,9 +367,7 @@
       };
     }
     const phase = live.phase === "copy" ? t("backup.phase_copy") : t("backup.phase_phone");
-    const pw = encrypted && !S.state.has_password && !live.running ? `
-      <h2>${esc(t("backup.password_title"))}</h2><p class="muted small">${esc(t("backup.password_sub"))}</p>
-      <label class="field"><span>${esc(t("backup.password"))}</span><input type="password" id="pw" autocomplete="off"></label>` : "";
+    const pw = passwordField("backup");
     return {
       body: `${errorCard("backup")}<div id="live">${banner}${live.running ? trip("backup", { phase, from: "iphone", to: "mac" }) : ""}</div>${pw}`,
       actions: live.running ? "" : `<button type="button" class="btn" data-act="start" data-step="backup">${esc(t("backup.start"))}</button>`,
@@ -386,7 +396,7 @@
     const d = live.data || {};
     const sub = d.total ? t("common.of", { a: num(d.done), b: num(d.total) }) : "";
     return {
-      body: `${errorCard("prepare")}<div id="live">${live.running ? trip("prepare", { phase: t("prepare.p_" + (live.phase || "read")), sub, from: "android", to: "iphone", phases: preparePhases(live.phase || "read") }) : ""}</div>`,
+      body: `${errorCard("prepare")}${passwordField("prepare")}<div id="live">${live.running ? trip("prepare", { phase: t("prepare.p_" + (live.phase || "read")), sub, from: "android", to: "iphone", phases: preparePhases(live.phase || "read") }) : ""}</div>`,
       actions: live.running ? `<button type="button" class="btn quiet" data-act="cancel">${esc(t("common.stop"))}</button>`
         : `<button type="button" class="btn" data-act="start" data-step="prepare">${esc(t("prepare.start"))}</button>`,
     };
@@ -405,7 +415,7 @@
       };
     }
     return {
-      body: `${errorCard("restore")}
+      body: `${errorCard("restore")}${passwordField("restore")}
         <ul class="ticks need">${["restore.before_1", "restore.before_2", "restore.before_3"].map((k) => `<li>${I.warn}<span>${esc(t(k))}</span></li>`).join("")}</ul>
         <div id="live" style="margin-top:18px">${fmOn ? `<div class="checks">${checkRow("ck-fm2", "wait", I.pin, esc(t("ready.findmy")), esc(t("ready.findmy_on")), "",
           details("grey2", t("ready.findmy_grey"), list(["ready.grey_1", "ready.grey_2", "ready.grey_3"])))}</div>` : ""}</div>`,
@@ -426,14 +436,14 @@
     const items = ["t1", "t2", "t3", "t4", "t5"].map((k) =>
       `<label class="todo-row"><input type="checkbox" data-tick="f_${k}" ${S.ui.ticks["f_" + k] ? "checked" : ""}><span>${esc(t("finish." + k))}</span></label>`).join("");
     return {
-      body: `${errorCard("undo")}
+      body: `${errorCard("undo")}${cleaned ? "" : passwordField("undo")}
         ${undone ? `<div class="banner"><div class="ic">${I.undo}</div><div><strong>${esc(t("finish.undone"))}</strong></div></div>` : ""}
         ${cleaned ? `<div class="banner"><div class="ic">${I.check}</div><div><strong>${esc(t("finish.cleaned"))}</strong><span>${esc(t("finish.thanks"))}</span></div></div>` : ""}
         <div class="checks todo">${items}</div>
         <div id="live">${before ? stats([[gb(before), `${t("finish.storage")}, ${t("finish.before")}`],
           now ? [gb(now), `${t("finish.storage")}, ${t("finish.now")}`] : null]) : ""}</div>`,
       actions: `<button type="button" class="btn quiet left" data-act="show-folder">${esc(t("common.show_folder"))}</button>
-        <button type="button" class="btn quiet" data-act="undo-dialog">${esc(t("finish.wrong"))}</button>
+        <button type="button" class="btn quiet" data-act="undo-dialog" ${cleaned ? "disabled" : ""}>${esc(t("finish.wrong"))}</button>
         <button type="button" class="btn" data-act="cleanup-dialog" ${cleaned ? "disabled" : ""}>${esc(t("finish.worked"))}</button>`,
       poll: "iphone",
     };
@@ -485,19 +495,22 @@
   }
 
   // ---------- polling checks ----------
+  let pollGen = 0;
   function schedulePoll(kind) {
     clearTimeout(S.pollTimer);
+    const gen = ++pollGen;             // any older loop sees a newer generation and stops
     if (!kind || !api()) return;
     const tick = async () => {
-      if (!busy()) await pollOnce(kind);  // never poke the phones while a job is using them
-      S.pollTimer = setTimeout(tick, 2000);
+      if (gen !== pollGen) return;
+      if (!busy()) await pollOnce(kind, gen);
+      if (gen === pollGen) S.pollTimer = setTimeout(tick, 2000);
     };
     S.pollTimer = setTimeout(tick, S.checks[kind] ? 1500 : 50);
   }
-  async function pollOnce(kind) {
-    if (kind === "connect") S.checks.connect = await call("check_connect") || S.checks.connect;
-    else if (kind === "ready") S.checks.ready = await call("check_ready") || S.checks.ready;
-    else if (kind === "iphone") S.checks.iphone = await call("check_iphone") || S.checks.iphone;
+  async function pollOnce(kind, gen) {
+    const result = await call({ connect: "check_connect", ready: "check_ready", iphone: "check_iphone" }[kind]);
+    if (gen !== pollGen || !result) return;   // the page moved on, or the engine is busy
+    S.checks[kind] = result;
     if (!document.activeElement || !document.activeElement.matches("input[data-key], #pw")) updateLive();
   }
   function refreshChecks() { delete S.checks.connect; schedulePoll("connect"); }
@@ -538,21 +551,17 @@
       S.state = await call("mark", step) || S.state;
       go(STEPS[STEPS.indexOf(step) + 1]);
     } else if (name === "start") {
-      delete S.errors[step];
-      if (step === "backup") {
-        const pw = $("#pw");
-        if (pw && pw.value) await call("set_password", pw.value);
-      }
-      S.live[step] = { running: true, pct: step === "copy" || step === "prepare" ? 0 : null };
-      const ok = await call("start", step);
-      if (ok) { S.state.busy = step; render(); }
+      await startJob(step);
     } else if (name === "cancel") {
       await call("cancel");
     } else if (name === "check-key") {
       delete S.errors.key;
       S.ui.keyResult = null;
       S.live.key = { running: true };
-      await call("check_key", keyText());
+      S.state.busy = "key";
+      render();
+      if (!(await call("check_key", keyText()))) delete S.live.key;
+      await refresh();
       render();
     } else if (name === "adb") {
       S.live.adb = { running: true, pct: 0 };
@@ -583,11 +592,21 @@
         <div class="row"><button type="button" class="btn quiet" value="cancel">${esc(t("common.cancel"))}</button>
         <button type="button" class="btn" value="ok">${esc(t("finish.undo"))}</button></div>`, async (value) => {
         if (value !== "ok") return;
-        delete S.errors.undo;
-        S.live.undo = { running: true, pct: null };
-        if (await call("start", "undo")) { S.state.busy = "undo"; render(); }
+        await startJob("undo");
       });
     }
+  }
+
+  async function startJob(step) {
+    const pw = $("#pw");
+    if (pw && pw.value) await call("set_password", pw.value);
+    delete S.errors[step];
+    S.live[step] = { running: true, pct: step === "copy" || step === "prepare" ? 0 : null };
+    S.state.busy = step;               // stop polling before the engine starts using the phones
+    render();
+    if (!(await call("start", step))) delete S.live[step];
+    await refresh();                   // the engine's own view of what is running
+    render();
   }
 
   function dialog(html, onClose) {
