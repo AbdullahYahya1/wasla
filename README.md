@@ -22,6 +22,13 @@ much faster thumbnails, and an Undo button.
 > Keep your Android phone as it is until you are happy with the result. Undo puts WhatsApp on the iPhone
 > back as it was, and a full iPhone backup stays on your Mac.
 
+## Install
+
+1. Download `Wasla-1.0.0.dmg` from [Releases](https://github.com/AbdullahYahya1/wasla/releases/latest).
+2. Open it and drag Wasla to Applications.
+3. The first time, right-click Wasla in Applications and choose **Open**, then **Open** again. macOS asks this
+   for apps that are not notarized by Apple yet.
+
 ## What you need
 
 - A Mac with Apple silicon and macOS 12 or later (for Intel Macs, run from source)
