@@ -34,7 +34,7 @@ class Paths:
 
     @property
     def state(self) -> Path:
-        return self._work / "state.json"
+        return self.work / "state.json"
 
     @classmethod
     def default(cls) -> Paths:
