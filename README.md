@@ -52,7 +52,7 @@ Nothing is uploaded. The 64-digit key stays in memory and is never written to di
 
 ```sh
 brew install uv
-git clone https://github.com/kerneltics/wasla && cd wasla
+git clone https://github.com/AbdullahYahya1/wasla && cd wasla
 uv run wasla
 ```
 
@@ -75,4 +75,4 @@ through every screen with a pretend engine; `python tools/screens.py` screenshot
 
 Built on [wamove](https://github.com/alicin/wamove) (GPL-3.0). Font: Readex Pro (SIL Open Font License).
 Wasla is free software under the GNU General Public License v3 or later; see [LICENSE](LICENSE).
-Made by [Kerneltics](https://kerneltics.com).
+Made by [AbdullahYahya1](https://github.com/AbdullahYahya1).

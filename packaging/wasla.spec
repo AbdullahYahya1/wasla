@@ -32,7 +32,7 @@ app = BUNDLE(
     coll,
     name="Wasla.app",
     icon=str(ROOT / "packaging" / "Wasla.icns"),
-    bundle_identifier="com.kerneltics.wasla",
+    bundle_identifier="io.github.abdullahyahya1.wasla",
     version=VERSION,
     info_plist={
         "CFBundleDisplayName": "Wasla",

@@ -25,7 +25,7 @@ from .state import STEPS, State
 log = logging.getLogger("wasla")
 
 ALLOWED_LINKS = ("https://github.com/", "https://support.apple.com/", "https://faq.whatsapp.com/",
-                 "https://apps.apple.com/", "https://wasla.app/")
+                 "https://apps.apple.com/")
 
 
 @dataclass

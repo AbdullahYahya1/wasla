@@ -9,7 +9,7 @@
     "WhatsApp Stickers": "stickers", "WhatsApp Video Notes": "videonotes",
   };
   const PREPARE_PHASES = ["read", "thumbnails", "chats", "media", "check"];
-  const ISSUES = "https://github.com/kerneltics/wasla/issues";
+  const ISSUES = "https://github.com/AbdullahYahya1/wasla/issues";
   const STORE = "https://apps.apple.com/app/whatsapp-messenger/id310633997";
   const I = window.WASLA_ICONS;
 
@@ -635,7 +635,7 @@
       ${qa("help.q_upload", `<p>${esc(t("help.a_upload"))}</p>`)}
       ${qa("help.q_wrong", `<p>${esc(t("help.a_wrong"))}</p>`)}
       <p class="small muted" style="margin-top:20px">${esc(t("help.about", { v: S.state.version || "" }))}</p>
-      <p><button type="button" class="btn quiet small" data-url="https://github.com/kerneltics/wasla">${esc(t("help.source"))}</button>
+      <p><button type="button" class="btn quiet small" data-url="https://github.com/AbdullahYahya1/wasla">${esc(t("help.source"))}</button>
       <button type="button" class="btn quiet small" data-url="${ISSUES}">${esc(t("error.report"))}</button></p>`;
   }
   function toggleHelp(open) {

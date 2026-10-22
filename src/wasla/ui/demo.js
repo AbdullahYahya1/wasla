@@ -51,7 +51,7 @@
       const ready = scene !== "waiting" && polls > 1;
       return {
         android: scene === "noadb" ? { state: "no_adb" } : ready ? { state: "ready", model: "motorola edge 40 neo", backup: "ok", backup_age_s: 240 } : { state: "unauthorized" },
-        iphone: ready ? { state: "ready", name: "iPhone Abdullah", ios: "27.0.1", used_bytes: 14.4e9, find_my: false, encrypted: false } : { state: "missing" },
+        iphone: ready ? { state: "ready", name: "My iPhone", ios: "27.0.1", used_bytes: 14.4e9, find_my: false, encrypted: false } : { state: "missing" },
         disk: { free_bytes: 68e9 },
       };
     },

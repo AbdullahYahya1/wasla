@@ -68,11 +68,11 @@ def test_iphone_untrusted(monkeypatch):
 
 
 def test_iphone_ready_cleans_name(monkeypatch):
-    phone = device.Phone(udid="u", name="‏iPhone ⁨Abdullah⁩", ios="27.0.1",
+    phone = device.Phone(udid="u", name="‏iPhone ⁨Sara⁩", ios="27.0.1",
                          encrypts_backups=False, used_bytes=14_200_000_000, find_my=False)
     monkeypatch.setattr(device, "phone", lambda udid=None: phone)
     result = checks.iphone()
-    assert result["name"] == "iPhone Abdullah" and result["find_my"] is False
+    assert result["name"] == "iPhone Sara" and result["find_my"] is False
 
 
 def test_download_platform_tools(tmp_path):
