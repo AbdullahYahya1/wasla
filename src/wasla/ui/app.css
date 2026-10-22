@@ -223,6 +223,7 @@ summary { cursor: pointer; color: var(--sky); font-size: 14px; width: fit-conten
 .todo-row:has(input:checked) span { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--route); }
 .manual { display: flex; gap: 10px; align-items: center; cursor: pointer; }
 .manual input { width: 20px; height: 20px; accent-color: var(--amber); }
+.manual.below { margin-top: 12px; font-weight: 600; font-size: 14px; }
 .spin { width: 20px; height: 20px; border-radius: 50%; border: 3px solid var(--route); border-top-color: var(--amber);
   animation: spin 1s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }

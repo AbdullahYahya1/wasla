@@ -88,6 +88,7 @@
     if (scene === "error") S.errors[want] = { code: q.get("code") || "key_wrong", detail: q.get("code") === "unknown" ? "ConnectionTerminatedError: the device went away" : undefined };
     if (want === "key" && scene === "done") S.ui.keyResult = { order: "rows_rtl" };
     if (want === "ready" && scene === "done") S.ui.ticks = { register: true, offline: true };
+    if (scene === "done" || scene === "running" || scene === "error") S.view = want;
     if (q.get("help")) document.getElementById("help-btn").click();
     if (q.get("open")) S.ui.open[q.get("open")] = true;
     window.wasla._render();

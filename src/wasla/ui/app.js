@@ -177,7 +177,8 @@
   }
 
   function stats(rows) {
-    return `<div class="stats">${rows.filter(Boolean).map(([value, label]) =>
+    rows = rows.filter(Boolean);
+    return `<div class="stats" style="grid-template-columns:repeat(${Math.min(rows.length, 5)},minmax(0,1fr))">${rows.map(([value, label]) =>
       `<div class="stat"><b>${esc(value)}</b><span>${esc(label)}</span></div>`).join("")}</div>`;
   }
 
@@ -327,13 +328,13 @@
       : checkRow("ck-wa", waOk ? "ok" : "wait", I.chat, esc(t("ready.wa")),
         waOk ? "" : esc(t(p.whatsapp_business ? "ready.wa_business" : "ready.wa_missing")),
         waOk ? "" : `<button type="button" class="btn small quiet" data-url="${STORE}">${esc(t("ready.open_store"))}</button>`);
-    const regRow = checkRow("ck-reg", ticks.register ? "ok" : "wait", I.key, esc(t("ready.register")), esc(t("ready.register_sub")),
-      `<label class="manual"><input type="checkbox" data-tick="register" ${ticks.register ? "checked" : ""}>${esc(t("ready.register_done"))}</label>`);
+    const regRow = checkRow("ck-reg", ticks.register ? "ok" : "wait", I.key, esc(t("ready.register")), esc(t("ready.register_sub")), "",
+      `<label class="manual below"><input type="checkbox" data-tick="register" ${ticks.register ? "checked" : ""}>${esc(t("ready.register_done"))}</label>`);
     const fmRow = !c.iphone ? checkRow("ck-fm", "busy", "", esc(t("ready.findmy")), "")
       : checkRow("ck-fm", fmOk ? "ok" : "wait", I.pin, esc(t("ready.findmy")), fmOk ? "" : esc(t("ready.findmy_on")), "",
         fmOk ? "" : details("grey", t("ready.findmy_grey"), list(["ready.grey_1", "ready.grey_2", "ready.grey_3"])));
-    const offRow = checkRow("ck-off", ticks.offline ? "ok" : "wait", I.plane, esc(t("ready.offline")), esc(t("ready.offline_sub")),
-      `<label class="manual"><input type="checkbox" data-tick="offline" ${ticks.offline ? "checked" : ""}>${esc(t("ready.offline_done"))}</label>`);
+    const offRow = checkRow("ck-off", ticks.offline ? "ok" : "wait", I.plane, esc(t("ready.offline")), esc(t("ready.offline_sub")), "",
+      `<label class="manual below"><input type="checkbox" data-tick="offline" ${ticks.offline ? "checked" : ""}>${esc(t("ready.offline_done"))}</label>`);
     const all = waOk && fmOk && ticks.register && ticks.offline;
     return {
       body: `<div class="checks" id="live">${waRow}${regRow}${fmRow}${offRow}</div>`,
